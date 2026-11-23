@@ -609,16 +609,20 @@ function qRepick(s) {
 }
 function dayRoll(st) {
   if (st.day !== todayStr()) { st.day = todayStr(); st.doneToday = false; st.challenge = 0; st.added = {}; st.verifiedToday = false; }
-  if (st.lastDone !== todayStr() && st.lastDone !== yesterdayStr()) { st.streak = 0; }
   if (st.week !== weekStr() || !st.wk || !st.wk.byDay) { st.week = weekStr(); st.wk = emptyWeek(); }
 }
+// Seri kontrolü: son antrenman bugün ya da dün değilse seri biter. Şut takibinden gelen geçmiş günler işlendikten SONRA çalışır.
+function streakCheck(st) {
+  if (st.lastDone !== todayStr() && st.lastDone !== yesterdayStr()) { st.streak = 0; }
+}
+function prevDayStr(ds) { var p = String(ds).split('-').map(Number); return dayStr(new Date(p[0], p[1] - 1, p[2] - 1)); }
 // Şut takibi ekranında kaydedilen antrenmanları işle (aynı sitede, aynı tarayıcı deposu)
 function applySessions(st) {
   var n = 0;
   try {
     var sess = JSON.parse(window.localStorage.getItem('greenai.sessions') || '[]');
     var seen = st.sessionsSeen || 0;
-    sess.filter(function (x) { return x && x.date > seen; }).forEach(function (x) {
+    sess.filter(function (x) { return x && x.date > seen; }).sort(function (p, q) { return p.date - q.date; }).forEach(function (x) {
       n++;
       st.shotAtt = (st.shotAtt || 0) + (x.att || 0);
       st.shotMade = (st.shotMade || 0) + (x.made || 0);
@@ -628,15 +632,21 @@ function applySessions(st) {
         st.wk = Object.assign({}, st.wk, { shotAtt: (st.wk.shotAtt || 0) + (x.att || 0), shotMade: (st.wk.shotMade || 0) + (x.made || 0) });
       }
       var asWorkout = false;
-      // 20 ve üstü şutluk takipli antrenman, günün antrenmanı sayılır (kendi beyanı değil, kamera doğrular)
-      if (dayStr(d) === todayStr() && (x.att || 0) >= 20 && !st.doneToday) {
-        var ns = (st.lastDone === yesterdayStr()) ? st.streak + 1 : 1;
+      // 20 ve üstü şutluk takipli antrenman, o günün antrenmanı sayılır (kendi beyanı değil, kamera doğrular).
+      // Kayıt geç saatte yapılıp uygulama ertesi gün açılsa da o gün sayılır, seri bozulmaz.
+      var sday = dayStr(d);
+      if ((x.att || 0) >= 20 && (!st.lastDone || sday > st.lastDone)) {
+        var ns = (st.lastDone === prevDayStr(sday)) ? (st.streak || 0) + 1 : 1;
         var bonus = (ns % 7 === 0) ? 70 : 0;
         var mins = Math.max(1, x.min || 0);
-        var w = Object.assign({}, st.wk, { byDay: st.wk.byDay.slice() });
-        w.workouts += 1; w.minutes += mins; w.ptsW += 20; w.ptsS += 10 + bonus; w.byDay[(d.getDay() + 6) % 7] += mins;
-        st.wk = w; st.doneToday = true; st.verifiedToday = true; st.streak = ns; st.lastDone = todayStr();
-        st.totalWorkouts += 1; st.totalPoints += 30 + bonus;
+        if (dayStr(mon) === st.week) {
+          var w = Object.assign({}, st.wk, { byDay: st.wk.byDay.slice() });
+          w.workouts += 1; w.minutes += mins; w.ptsW += 20; w.ptsS += 10 + bonus; w.byDay[(d.getDay() + 6) % 7] += mins;
+          st.wk = w;
+        }
+        if (sday === todayStr()) { st.doneToday = true; st.verifiedToday = true; }
+        st.streak = ns; st.lastDone = sday;
+        st.totalWorkouts = (st.totalWorkouts || 0) + 1; st.totalPoints = (st.totalPoints || 0) + 30 + bonus;
         qWorkout(st, mins, x.date, st.partner, ns, 30 + bonus);
         asWorkout = true;
       }
@@ -645,6 +655,7 @@ function applySessions(st) {
     });
     st.sessionsSeen = seen;
   } catch (err) {}
+  streakCheck(st);
   return n;
 }
 
