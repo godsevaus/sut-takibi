@@ -12,192 +12,250 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <style>
-  :root { --bg:#0F1115; --card:#1A1D24; --line:#3A3F4B; --text:#F3F4F6; --muted:#B4B9C4; --accent:#FF8A3D; --good:#7BD88F; --bad:#FF9B8A; }
+  :root { --bg:#0F1115; --card:#1A1D24; --card2:#262A33; --line:#3A3F4B; --text:#F3F4F6; --muted:#B4B9C4; --accent:#FF8A3D; --good:#7BD88F; --bad:#FF9B8A; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; display:flex; flex-direction:column; gap:16px; }
-  h1 { margin:0; font-size: 26px; }
-  h2 { margin:0 0 8px; font-size: 18px; }
+  [hidden] { display: none !important; }
+  html, body { margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 12px 14px 40px; display:flex; flex-direction:column; gap:12px; }
   p { margin:0; line-height:1.45; }
   .muted { color: var(--muted); font-size: 14px; }
-  .card { background: var(--card); border-radius: 18px; padding: 16px; display:flex; flex-direction:column; gap:12px; }
-  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  button, .filebtn { font: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid var(--line); background: transparent; color: var(--text); cursor: pointer; display:inline-flex; align-items:center; justify-content:center; }
-  button.primary, .filebtn.primary { background: var(--accent); border-color: var(--accent); color: #0F1115; }
-  button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: #0F1115; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  button:focus-visible, .filebtn:focus-within { outline: 3px solid #fff; outline-offset: 2px; }
+  .center { text-align:center; }
+  button, .filebtn { font: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid var(--line); background: transparent; color: var(--text); cursor: pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0F1115; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button:focus-visible, a:focus-visible, .filebtn:focus-within, summary:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
   .filebtn { position: relative; }
   .filebtn input { position:absolute; width:1px; height:1px; opacity:0; }
-  .stage { position: relative; background:#000; border-radius: 18px; overflow:hidden; min-height: 220px; display:flex; align-items:center; justify-content:center; }
+
+  /* üst çubuk */
+  .topbar { display:flex; align-items:center; gap:10px; min-height:44px; }
+  .back { color: var(--muted); text-decoration:none; font-weight:600; font-size:15px; min-height:44px; display:inline-flex; align-items:center; padding-right:6px; }
+  .topbar h1 { margin:0; font-size: 20px; flex-grow:1; }
+  .iconbtn { width:44px; padding:0; border:none; background: var(--card); border-radius: 12px; }
+  .status { font-size: 13px; color: var(--muted); }
+
+  /* adımlar */
+  .steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:6px; }
+  .steps li { font-size:13px; font-weight:600; color: var(--muted); background: var(--card); border-radius: 999px; padding: 8px 10px; text-align:center; }
+  .steps li.on { background: var(--accent); color:#0F1115; }
+  .steps li.done { color: var(--good); }
+  .steps li.done::before { content:"✓ "; }
+
+  /* görüntü */
+  .stage { position: relative; background:#000; border-radius: 20px; overflow:hidden; min-height: 300px; display:flex; align-items:center; justify-content:center; }
   .frame { position: relative; width: 100%; line-height: 0; }
   .frame video { display:block; width:100%; height:auto; }
   .frame canvas { position:absolute; inset:0; width:100%; height:100%; cursor: crosshair; }
-  .placeholder { color: var(--muted); padding: 40px 16px; text-align:center; }
+  .stage:fullscreen { border-radius:0; }
+  .stage:fullscreen .frame { width:auto; }
+  .stage:fullscreen .frame video { width:auto; height:auto; max-width:100vw; max-height:100vh; }
+  .empty { display:flex; flex-direction:column; align-items:center; gap:12px; padding: 32px 20px; text-align:center; max-width: 420px; }
+  .empty-t { font-size: 20px; font-weight: 700; }
+  .empty-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:6px; }
+  .big { min-height: 52px; padding: 0 22px; font-size: 16px; }
   .banner { position:absolute; left:12px; right:12px; top:12px; padding:10px 14px; border-radius:12px; background: rgba(15,17,21,.85); font-size:15px; font-weight:600; }
-  .stats { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; }
-  @media (max-width: 560px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-  .stat { background: #262A33; border-radius: 14px; padding: 12px; }
-  .stat b { display:block; font-size: 28px; line-height:1.1; }
-  .stat span { color: var(--muted); font-size: 13px; }
+  .hud { position:absolute; left:10px; bottom:10px; padding:8px 12px; border-radius:14px; background: rgba(15,17,21,.75); display:flex; flex-direction:column; gap:3px; max-width: calc(100% - 120px); }
+  .hudtop { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .hudbig { font-size: 30px; font-weight: 700; line-height:1; }
+  .hudbig small { font-size: 18px; color: var(--muted); font-weight:600; }
+  .hudpct { font-size: 18px; font-weight:700; color: var(--accent); }
+  .hudtime { font-size: 14px; color: var(--muted); }
+  .hudcue { font-size: 15px; font-weight:600; }
+  .hudfps { font-size: 11px; color: var(--muted); }
+  .fsbtn { position:absolute; right:10px; bottom:10px; background: rgba(15,17,21,.75); border-color: transparent; font-size:14px; }
+
+  /* alt çubuk */
+  .bar { display:flex; gap:8px; }
+  .bar #btnRim { flex-grow:1; }
+  .bar button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color:#0F1115; }
+
+  /* sonuçlar */
+  .card { background: var(--card); border-radius: 18px; padding: 14px; display:flex; flex-direction:column; gap:12px; }
+  .stats { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; }
+  .stat { background: var(--card2); border-radius: 12px; padding: 10px; }
+  .stat b { display:block; font-size: 24px; line-height:1.1; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .wide { width:100%; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips button { min-height: 40px; font-size: 14px; padding: 0 12px; border-width: 1px; }
+  details.card > summary, details > summary { cursor:pointer; font-weight:600; font-size:15px; min-height:28px; list-style-position: inside; }
+  details[open] > summary { margin-bottom: 10px; }
   .tablewrap { overflow-x: auto; }
-  table { width:100%; min-width: 760px; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align:left; padding: 8px 6px; border-bottom: 1px solid #262A33; vertical-align: top; }
+  table { width:100%; min-width: 720px; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align:left; padding: 7px 6px; border-bottom: 1px solid var(--card2); vertical-align: top; }
   th { color: var(--muted); font-weight: 500; }
   .ok { color: var(--good); } .warn { color: var(--bad); }
   ul { margin:0; padding-left: 18px; line-height:1.5; }
-  #status { font-size: 14px; }
-  .hud { position:absolute; left:12px; bottom:12px; padding:10px 14px; border-radius:14px; background: rgba(15,17,21,.82); display:flex; flex-direction:column; gap:4px; max-width: calc(100% - 24px); }
-  .hudtop { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
-  .hudbig { font-size: 34px; font-weight: 700; line-height:1; }
-  .hudbig small { font-size: 20px; color: var(--muted); font-weight:600; }
-  .hudpct { font-size: 20px; font-weight:700; color: var(--accent); }
-  .hudtime { font-size: 15px; color: var(--muted); }
-  .hudcue { font-size: 16px; font-weight:600; }
-  .hudfps, .hudtrk { font-size: 12px; color: var(--muted); }
-  .stage:fullscreen { border-radius:0; background:#000; }
-  .stage:fullscreen .frame { width:auto; }
-  .stage:fullscreen .frame video { width:auto; height:auto; max-width:100vw; max-height:100vh; }
-  .stage .fsbtn { position:absolute; right:12px; bottom:12px; background: rgba(15,17,21,.82); border-color: transparent; }
-  .hist li { margin-bottom: 4px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+
+  /* ayarlar paneli */
+  .sheet-bg { position:fixed; inset:0; background: rgba(0,0,0,.55); z-index: 40; }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index: 41; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 22px 22px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:4px; max-height: 85vh; overflow-y:auto; }
+  .sheet-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px; }
+  .sheet-head h2 { margin:0; font-size: 18px; }
+  .set { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 12px 0; border-bottom: 1px solid var(--card2); }
+  .set:last-child { border-bottom:none; }
+  .set > span { display:flex; flex-direction:column; gap:2px; font-weight:600; font-size:15px; }
+  .set small { font-weight:400; font-size:13px; color: var(--muted); }
+  .seg { display:flex; gap:4px; background: var(--bg); padding:4px; border-radius: 12px; flex-wrap:wrap; justify-content:flex-end; }
+  .seg button, .seg .filebtn { min-height: 38px; padding: 0 12px; border:none; border-radius: 9px; font-size: 14px; }
+  .seg button[aria-pressed="true"] { background: var(--text); color:#0F1115; }
+  .switch { width: 52px; min-width:52px; height: 32px; min-height: 32px; padding:0; border-radius: 999px; border:none; background: var(--line); position:relative; }
+  .switch::after { content:""; position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%; background:#fff; transition: left .15s; }
+  .switch[aria-pressed="true"] { background: var(--accent); }
+  .switch[aria-pressed="true"]::after { left: 24px; }
+  @media (prefers-reduced-motion: reduce) { .switch::after { transition:none; } }
 </style>
 </head>
 <body>
 <main>
-  <header style="display:flex; flex-direction:column; gap:6px">
-    <a href="index.html" style="color: var(--accent); font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center">← Green AI'a dön</a>
-    <h1>Green AI · Şut takibi</h1>
-    <p class="muted">Çemberi kendisi bulur ve kamera kayarsa izler. Topu yakın planda arar, yörüngesini tahmin eder, topunun rengini öğrenir. Şutu atanı seçer, iskeleti titreşimsiz izler; kamera tam yandan değilse açıları 3 boyutlu ölçer. Her şey senin cihazında çalışır; video hiçbir yere gönderilmez.</p>
-    <p id="status" role="status" aria-live="polite">Modeller yükleniyor…</p>
-  </header>
+  <div class="topbar">
+    <a class="back" href="index.html" aria-label="Green AI'a dön">← Green AI</a>
+    <h1>Şut takibi</h1>
+    <button id="btnSettings" class="iconbtn" type="button" aria-label="Ayarlar" aria-haspopup="dialog">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h9M16 6h3M3 11h3M10 11h9M3 16h11M18 16h1"></path><circle cx="14" cy="6" r="2"></circle><circle cx="8" cy="11" r="2"></circle><circle cx="16" cy="16" r="2"></circle></svg>
+    </button>
+  </div>
+  <p id="status" class="status" role="status" aria-live="polite">Modeller yükleniyor…</p>
 
-  <section class="card" aria-labelledby="h-setup">
-    <h2 id="h-setup">1. Kaynak ve ayarlar</h2>
-    <div class="row">
-      <label class="filebtn primary">Video yükle<input id="file" type="file" accept="video/*"></label>
-      <button id="btnCam" type="button">Kamerayı aç</button>
-      <button id="btnPlay" type="button" disabled>Duraklat</button>
-      <button id="btnSlow" type="button" aria-pressed="true" disabled>Yavaş oynat (0,5x)</button>
-    </div>
-    <div class="row" role="group" aria-label="Şut eli">
-      <span class="muted">Şut elin:</span>
-      <button id="handL" type="button" aria-pressed="true">Sol</button>
-      <button id="handR" type="button" aria-pressed="false">Sağ</button>
-    </div>
-    <div class="row">
-      <button id="btnColor" type="button" aria-pressed="true">Renk yardımı</button>
-      <button id="btnFull" type="button" aria-pressed="false" disabled>Hassas vücut modeli</button>
-      <button id="btnBallP" type="button" aria-pressed="false" disabled>Hassas top modeli</button>
-      <button id="btnVoice" type="button" aria-pressed="true">Sesli geri bildirim</button>
-      <button id="btnFlip" type="button" disabled>Kamerayı çevir</button>
-    </div>
-    <div class="row" role="group" aria-label="Antrenman hedefi">
-      <span class="muted">Hedef:</span>
-      <button class="goal" data-goal="0" type="button" aria-pressed="true">Yok</button>
-      <button class="goal" data-goal="10" type="button" aria-pressed="false">10 isabet</button>
-      <button class="goal" data-goal="25" type="button" aria-pressed="false">25 isabet</button>
-      <button class="goal" data-goal="50" type="button" aria-pressed="false">50 isabet</button>
-    </div>
-    <p class="muted">Renk yardımı, model topu kaçırınca topu rengiyle arar; topunun gerçek rengini kendisi öğrenir ve yerinden kıpırdamayan turuncuyu (çember, koni, duvar) yok sayar. Hassas modeller daha doğru ama daha yavaştır; eski telefonlarda kapalı tut. Sesli geri bildirim her şuttan sonra sonucu ve tek bir düzeltme ipucunu söyler; telefonun sesini aç.</p>
-  </section>
-
-  <section class="card" aria-labelledby="h-rim">
-    <h2 id="h-rim">2. Çember</h2>
-    <p class="muted">Kamera açılınca çember kendiliğinden bulunur ve telefon biraz kayarsa izlenir; çok oynarsa yeniden aranır. Yeşil çizgi çemberin üstünde değilse "Elle işaretle"ye bas, sonra görüntüde çemberin önce sol, sonra sağ kenarına dokun.</p>
-    <div class="row">
-      <button id="btnRimAuto" type="button" disabled>Çemberi otomatik bul</button>
-      <button id="btnRim" type="button" disabled>Elle işaretle</button>
-      <span id="rimInfo" class="muted">Çember henüz bulunmadı.</span>
-    </div>
-  </section>
+  <ol class="steps" aria-label="Adımlar">
+    <li id="st1" class="on" aria-current="step">Kamera</li>
+    <li id="st2">Çember</li>
+    <li id="st3">Şut at</li>
+  </ol>
 
   <div class="stage">
     <div class="frame" id="frame" hidden>
       <video id="vid" playsinline muted></video>
       <canvas id="canvas" aria-label="Kamera ya da video görüntüsü üstünde iskelet, top, yörünge ve çember çizimleri"></canvas>
     </div>
-    <p class="placeholder" id="placeholder">Bir video yükle ya da kamerayı aç.</p>
+    <div class="empty" id="placeholder">
+      <svg aria-hidden="true" width="52" height="52" viewBox="0 0 56 56" fill="none" stroke="#FF8A3D" stroke-width="3" stroke-linecap="round"><circle cx="28" cy="28" r="24"></circle><path d="M4 28h48M28 4v48M11 11c8 8 8 26 0 34M45 11c-8 8-8 26 0 34"></path></svg>
+      <p class="empty-t">Şutlarını saymaya hazır mısın?</p>
+      <p class="muted">Telefonu sabitle. Kendini ve çemberi yandan, aynı kadrajda görecek şekilde koy.</p>
+      <div class="empty-btns">
+        <button id="emptyCam" class="primary big" type="button">Kamerayı aç</button>
+        <button id="emptyFile" class="big" type="button">Video yükle</button>
+      </div>
+    </div>
     <div class="banner" id="banner" hidden></div>
     <div class="hud" id="hud" hidden aria-live="polite">
       <div class="hudtop"><span class="hudbig"><b id="hMade">0</b><small> / <span id="hAtt">0</span></small></span><span class="hudpct" id="hPct">–</span><span class="hudtime" id="hTime">00:00</span></div>
       <div class="hudcue" id="hCue"></div>
       <div class="hudfps" id="hFps"></div>
-      <div class="hudtrk" id="hTrk"></div>
     </div>
     <button class="fsbtn" id="btnFs" type="button" hidden>Tam ekran</button>
   </div>
 
-  <section class="card" aria-labelledby="h-stats">
-    <h2 id="h-stats">3. Sonuçlar</h2>
+  <div class="bar" id="bar" hidden>
+    <button id="btnRim" class="primary" type="button" disabled>Çemberi işaretle</button>
+    <button id="btnPlay" type="button" disabled>Duraklat</button>
+    <button id="btnSlow" type="button" aria-pressed="true" aria-label="Yavaş oynat" disabled>0,5x</button>
+  </div>
+  <p id="rimInfo" class="muted center">Çember işaretlenmedi.</p>
+
+  <section class="card" aria-label="Sonuçlar">
     <div class="stats" aria-live="polite">
       <div class="stat"><b id="sAtt">0</b><span>Atış</span></div>
       <div class="stat"><b id="sMade">0</b><span>İsabet</span></div>
       <div class="stat"><b id="sPct">–</b><span>Yüzde</span></div>
-      <div class="stat"><b id="sAcc">–</b><span>Takip doğruluğu</span></div>
+      <div class="stat"><b id="sAcc">–</b><span>Doğruluk</span></div>
     </div>
-    <div class="row">
+    <button id="btnSave" class="primary wide big" type="button" disabled>Antrenmanı bitir ve kaydet</button>
+    <div class="chips" aria-label="Düzeltmeler">
       <button id="btnFix" type="button" disabled>Son şutu düzelt</button>
-      <button id="btnAddMake" type="button">Sayılmayan isabet ekle</button>
-      <button id="btnAddMiss" type="button">Sayılmayan kaçan ekle</button>
+      <button id="btnAddMake" type="button">+ Sayılmayan isabet</button>
+      <button id="btnAddMiss" type="button">+ Sayılmayan kaçan</button>
     </div>
-    <div class="row">
-      <button id="btnCopy" type="button" disabled>Sonuçları kopyala</button>
-      <button id="btnReset" type="button">Sıfırla</button>
-    </div>
-    <p class="muted">Takip doğruluğu, senin düzeltmelerinden hesaplanır: yanlış sayılan ve hiç sayılmayan her şut doğruluğu düşürür. Takibi geliştirmenin yolu bu: düzeltmeleri dürüstçe yap, sonuçları kopyalayıp Claude'a getir.</p>
     <p id="summary" class="muted"></p>
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th scope="col">#</th><th scope="col">Sonuç</th><th scope="col">El</th><th scope="col">Diz</th><th scope="col">Dirsek (set)</th><th scope="col">Dirsek (bırakış)</th><th scope="col">Bırakış açısı</th><th scope="col">Giriş açısı</th><th scope="col">İpucu</th></tr></thead>
-        <tbody id="log"><tr><td colspan="9" class="muted">Henüz şut yok.</td></tr></tbody>
-      </table>
-    </div>
-    <p class="muted">Hedef aralıklar: en derin diz 110–130°, set noktasında dirsek 70–90°, bırakışta dirsek en az 160°, bırakış açısı 44–55° (yakın şutlarda daha dik olması normal), potaya giriş açısı 40° ve üstü. En iyi sonuç yandan, şut yönüne dik çekimde alınır; kamera çaprazdaysa açılar 3 boyutlu tahminle ölçülür ve daha az kesindir.</p>
+    <details>
+      <summary>Şut ayrıntıları</summary>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th scope="col">#</th><th scope="col">Sonuç</th><th scope="col">Diz</th><th scope="col">Dirsek (set)</th><th scope="col">Dirsek (bırakış)</th><th scope="col">Bırakış açısı</th><th scope="col">Giriş açısı</th><th scope="col">İpucu</th></tr></thead>
+          <tbody id="log"><tr><td colspan="8" class="muted">Henüz şut yok.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin-top:10px">Hedefler: en derin diz 110–130°, set noktasında dirsek 70–90°, bırakışta dirsek en az 160°, bırakış açısı 44–55° (yakın şutlarda daha dik olması normal), giriş açısı 40° ve üstü. Açılar yalnızca yandan çekimde anlamlıdır. Doğruluk, senin düzeltmelerinden hesaplanır.</p>
+      <div class="row" style="margin-top:10px">
+        <button id="btnCopy" type="button" disabled>Sonuçları kopyala</button>
+        <button id="btnReset" type="button">Sıfırla</button>
+      </div>
+    </details>
   </section>
 
-  <section class="card" aria-labelledby="h-hist">
-    <h2 id="h-hist">4. Antrenman geçmişi</h2>
-    <div class="row"><button id="btnSave" type="button" disabled>Antrenmanı bitir ve kaydet</button></div>
-    <ul id="hist" class="muted hist"><li>Henüz kayıtlı antrenman yok.</li></ul>
-    <p class="muted">Kaydettiğin antrenmanlar Green AI'ın istatistiklerine ve görevlerine yazılır. 20 ve üstü şutluk bir antrenman, günün antrenmanı sayılır ve serini uzatır. Uygulamaya dönünce görünür.</p>
-  </section>
+  <details class="card">
+    <summary>Antrenman geçmişi</summary>
+    <ul id="hist" class="muted"><li>Henüz kayıtlı antrenman yok.</li></ul>
+    <p class="muted" style="margin-top:8px">Kaydettiğin antrenmanlar Green AI'ın istatistiklerine yazılır. 20 ve üstü şutluk bir antrenman, günün antrenmanı sayılır ve serini uzatır.</p>
+  </details>
 
-  <section class="card" aria-labelledby="h-tips">
-    <h2 id="h-tips">Daha iyi takip için</h2>
+  <details class="card">
+    <summary>Daha iyi takip için</summary>
     <ul class="muted">
-      <li>Telefonu sabitle (tripod, duvar, çanta). Biraz kayarsa çember izlenir; çok oynarsa yeniden aranır.</li>
-      <li>Yandan çek: kamera, senin ile pota arasındaki çizgiye dik dursun. 4–6 metre uzaktan; tüm vücudun, top, çember ve file aynı kadrajda olsun.</li>
-      <li>Şut kolun kameraya dönük olsun. Sağ elle atıyorsan kamerayı sağ tarafına koy; ters tarafta kalırsa uyarı çıkar.</li>
-      <li>Işık iyi olsun, arkanda güneş olmasın. Mümkünse 60 fps çek.</li>
-      <li>Kayıttan analizde "Yavaş oynat" açık kalsın; modelin her kareye yetişmesine yardım eder.</li>
-      <li>Canlı takipte telefonu yatay tut ve "Tam ekran"ı kullan. İşlem hızı düşük uyarısı çıkarsa hassas modelleri kapat.</li>
-      <li>Dirsek dışa açılması (tavuk kanadı) yandan ölçülemez; onun için önden ayrı bir video gerekir.</li>
-      <li>Yandan çekimde top çemberin tam önünden ya da arkasından düşerse içinden geçmiş gibi görünür. Böyle bir kaçanı "Son şutu düzelt" ile düzelt; isabet sayımı senin için daha önemliyse kamerayı yandan biraz arkaya, çapraz bir açıya koy.</li>
+      <li>Telefonu sabitle (tripod, duvar, çanta). Kamera oynarsa çemberi yeniden işaretle.</li>
+      <li>Yandan çek: kamera, senin ile pota arasındaki çizgiye dik dursun. 4–6 metre uzaktan; vücudun, top ve çember aynı kadrajda olsun.</li>
+      <li>Işık iyi olsun, arkanda güneş olmasın. Telefonu yatay tut ve "Tam ekran"ı kullan.</li>
+      <li>Kayıttan analizde yavaş oynatma (0,5x) açık kalsın.</li>
+      <li>Top çemberin tam önünden ya da arkasından düşerse içinden geçmiş gibi görünebilir; "Son şutu düzelt" ile düzelt. İsabet sayımı öncelikliyse kamerayı yandan biraz arkaya, çapraz koy.</li>
+      <li>Dirsek dışa açılması yandan ölçülemez; onun için önden ayrı bir video gerekir.</li>
     </ul>
-  </section>
+  </details>
 </main>
 
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
+  <div class="sheet-head">
+    <h2 id="sheetT">Ayarlar</h2>
+    <button id="sheetClose" class="iconbtn" type="button" aria-label="Kapat">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4 4 14"></path></svg>
+    </button>
+  </div>
+  <div class="set"><span>Kaynak</span>
+    <div class="seg">
+      <button id="btnCam" type="button">Kamera</button>
+      <label class="filebtn">Video<input id="file" type="file" accept="video/*"></label>
+      <button id="btnFlip" type="button" disabled>Çevir</button>
+    </div>
+  </div>
+  <div class="set"><span>Şut elin</span>
+    <div class="seg" role="group" aria-label="Şut elin">
+      <button id="handL" type="button" aria-pressed="true">Sol</button>
+      <button id="handR" type="button" aria-pressed="false">Sağ</button>
+    </div>
+  </div>
+  <div class="set"><span>Hedef<small>İsabet sayısı</small></span>
+    <div class="seg" role="group" aria-label="Hedef">
+      <button class="goal" data-goal="0" type="button" aria-pressed="true">Yok</button>
+      <button class="goal" data-goal="10" type="button" aria-pressed="false">10</button>
+      <button class="goal" data-goal="25" type="button" aria-pressed="false">25</button>
+      <button class="goal" data-goal="50" type="button" aria-pressed="false">50</button>
+    </div>
+  </div>
+  <div class="set"><span id="lblVoice">Sesli geri bildirim<small>Her şuttan sonra sonuç ve tek ipucu</small></span>
+    <button id="btnVoice" class="switch" type="button" aria-pressed="true" aria-labelledby="lblVoice"></button>
+  </div>
+  <div class="set"><span id="lblColor">Turuncu renk yardımı<small>Model topu kaçırınca rengiyle arar</small></span>
+    <button id="btnColor" class="switch" type="button" aria-pressed="true" aria-labelledby="lblColor"></button>
+  </div>
+  <div class="set"><span id="lblFull">Hassas vücut modeli<small>Daha doğru ama daha yavaş</small></span>
+    <button id="btnFull" class="switch" type="button" aria-pressed="false" aria-labelledby="lblFull" disabled></button>
+  </div>
+</div>
+
+
 <script type="module">
-// Green AI şut takibi, sürüm 5
-// Çember: sabit duran turuncu-kırmızı yatay halka (altında file) aranarak kendiliğinden bulunur; kamera kayarsa şablon eşleştirmeyle izlenir.
-// Top: tahmin edilen yerinin çevresi kırpılıp büyütülerek aranır (küçük top modele büyük görünür); yörünge yerçekimli Kalman süzgeciyle
-//      tahmin edilir ve kayıp karelerde sürdürülür; renk yardımı topun gerçek rengini öğrenir, hareket etmeyen turuncuyu eler.
-// Vücut: kadrajdaki kişiler arasından şutu atan seçilir; eklemler titreşimsiz yumuşatılır (One Euro süzgeci); kamera tam yandan
-//      değilse açılar 3 boyutlu iskeletten ölçülür; şut eli her şutta topun çıktığı bilekten bulunur.
+// Takip kütüphanesi sonradan yüklenir: inemezse sayfanın geri kalanı (video, renkle top takibi) yine çalışır
 let FilesetResolver = null, PoseLandmarker = null, ObjectDetector = null;
 const MP_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-const WASM = MP_URL + "/wasm";
+
+const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const POSE_LITE = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 const POSE_FULL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
-const BALL_FAST = [
+const BALL_MODELS = [
   "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
   "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite"
 ];
-const BALL_PRECISE = [
-  "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-  "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/int8/1/efficientdet_lite2.tflite"
-];
-const VERSION = 5;
 
 // Hedef aralıklar
 const T = { knee: [110, 130], elbowSet: [70, 90], elbowRel: [160, 180], release: [44, 55], entry: [40, 60] };
@@ -207,69 +265,58 @@ const video = $("vid");
 video.playsInline = true; video.muted = true;
 const canvas = $("canvas"), ctx = canvas.getContext("2d");
 const small = document.createElement("canvas"), sctx = small.getContext("2d", { willReadFrequently: true });
-const roiC = document.createElement("canvas"), roiX = roiC.getContext("2d");
-roiC.width = roiC.height = 320;
-const mot = { c: document.createElement("canvas"), x: null, prev: null, map: null, w: 0, h: 0, k: 1, ok: false };
-mot.x = mot.c.getContext("2d", { willReadFrequently: true });
 
-let fileset = null, pose = null, ball = null, modelsDone = false, fullModel = false, preciseBall = false;
+let fileset = null, pose = null, ball = null, modelsDone = false, fullModel = false;
 let hand = "left", colorAssist = true, slow = true;
-let rim = null, rimSrc = "", rimClicks = [], markingRim = false, rimAuto = null, rimTrk = null;
+let rim = null, rimClicks = [], markingRim = false;
 let lastVideoTime = -1, lastTs = 0, running = false, stream = null;
-let ballHist = [], poseHist = [], srcLog = [];
-let heldPrev = false, lastHeld = null, release = null, predDraw = null;
+let ballHist = [], poseHist = [];
+let smooth = { el: null, kn: null, t: 0 };
+let heldPrev = false, lastHeld = null, release = null;
 let shot = null, cooldownUntil = 0, armed = true, lastDecisionT = 0;
 const shots = []; let addedMade = 0, addedMiss = 0;
 let voiceOn = true, facing = "environment", wakeLock = null, goal = 0, goalDone = false, sessionStart = null;
-let fpsCount = 0, fpsT = 0, fps = 0, camFps = 0, camRes = "", frameNo = 0, msPose = 0, msBall = 0, detN = 0;
-let lastLm = null, lastWl = null, lastLmT = 0, shooterBox = null, armVis = [], armWarned = false, handVotes = [];
-let colorSamples = [], colorProf = null;
+let fpsCount = 0, fpsT = 0, fps = 0, camFps = 0, camRes = "", frameNo = 0, msPose = 0, msBall = 0, lastLm = null, lastLmT = 0;
 const HIST_KEY = "greenai.sessions";
 
 const setStatus = (t) => { $("status").textContent = t; };
 function banner(t, ms) { const b = $("banner"); b.textContent = t || ""; b.hidden = !t; if (t && ms) setTimeout(() => { if (b.textContent === t) b.hidden = true; }, ms); }
-const L = (tr) => tr;
-function speak(text) {
-  if (!voiceOn || !text || !("speechSynthesis" in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "tr-TR"; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {}
-}
 
 // ---------- Modeller ----------
 async function makeTask(Task, opts) {
   try { return await Task.createFromOptions(fileset, { ...opts, baseOptions: { ...opts.baseOptions, delegate: "GPU" } }); }
   catch (e) { return await Task.createFromOptions(fileset, { ...opts, baseOptions: { ...opts.baseOptions, delegate: "CPU" } }); }
 }
-// İki kişiye kadar bulur; şutu atan seçilir (kadrajda başka biri varsa iskelet ona atlamaz)
-const poseOpts = (url) => ({ baseOptions: { modelAssetPath: url }, runningMode: "VIDEO", numPoses: 2, minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
-// Top modeli tek resim modunda: her karede görüntünün farklı bir parçası (yakın plan) verilebilir
-const ballOpts = (url) => ({ baseOptions: { modelAssetPath: url }, runningMode: "IMAGE", scoreThreshold: 0.2, maxResults: 4, categoryAllowlist: ["sports ball"] });
-async function loadBall(list) { for (const url of list) { try { return await makeTask(ObjectDetector, ballOpts(url)); } catch (e) {} } return null; }
+const poseOpts = (url) => ({ baseOptions: { modelAssetPath: url }, runningMode: "VIDEO", numPoses: 1, minPoseDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 async function init() {
   try {
     ({ FilesetResolver, PoseLandmarker, ObjectDetector } = await import(MP_URL));
     fileset = await FilesetResolver.forVisionTasks(WASM);
     pose = await makeTask(PoseLandmarker, poseOpts(POSE_LITE));
-    ball = await loadBall(BALL_FAST);
+    for (const url of BALL_MODELS) {
+      try { ball = await makeTask(ObjectDetector, { baseOptions: { modelAssetPath: url }, runningMode: "VIDEO", scoreThreshold: 0.2, maxResults: 3, categoryAllowlist: ["sports ball"] }); break; }
+      catch (e) { ball = null; }
+    }
     modelsDone = true;
     setStatus(ball ? "Hazır. Video yükle ya da kamerayı aç." : "Vücut takibi hazır. Top modeli yüklenemedi; top yalnızca rengiyle aranacak.");
-    $("btnFull").disabled = false; $("btnBallP").disabled = !ball;
+    $("btnFull").disabled = false;
   } catch (e) {
     modelsDone = true;
-    setStatus(loadHelp() + " (" + (e && e.message ? e.message : e) + ")");
+    setStatus(loadHelp()); console.warn(e);
   }
 }
 function loadHelp() {
   let inFrame = true; try { inFrame = window.self !== window.top; } catch (e) {}
   return inFrame
-    ? "Takip modelleri bu önizlemede yüklenemiyor: dosya başka bir uygulamanın içinde açılmış. Dosyayı bir web adresinden ya da bilgisayarda Chrome ile aç. Video yine oynar, çember ve top renkle bulunur, ama vücut takibi çalışmaz."
-    : "Takip modelleri yüklenemedi. İnternet bağlantını kontrol edip sayfayı yeniden aç. Video yine oynar, çember ve top renkle bulunur, ama vücut takibi çalışmaz.";
+    ? "Takip modelleri bu önizlemede yüklenemiyor: dosya başka bir uygulamanın içinde açılmış. Dosyayı bir web adresinden ya da bilgisayarda Chrome ile aç. Video yine oynar ve top rengiyle aranır, ama vücut takibi çalışmaz."
+    : "Takip modelleri yüklenemedi. İnternet bağlantını kontrol edip sayfayı yeniden aç. Video yine oynar ve top rengiyle aranır, ama vücut takibi çalışmaz.";
 }
 setTimeout(() => { if (!modelsDone) setStatus("Modeller hâlâ yükleniyor… " + loadHelp()); }, 20000);
 
 // ---------- Kaynaklar ----------
 async function startCamera() {
   stopSource();
-  // 60 kare/sn'yi zorla: önce 960×540, olmazsa 720p ve 480p'de 60, en son telefonun verebildiği
+  // 60 kare/sn'yi zorla: önce 720p, olmazsa daha düşük çözünürlükte 60, en son telefonun verebildiği
   const tries = [
     { width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { min: 50, ideal: 60 } },
     { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { min: 50, ideal: 60 } },
@@ -288,7 +335,7 @@ async function startCamera() {
   onSourceReady(false);
   $("btnFlip").disabled = false;
   keepAwake();
-  speak("Kamera hazır. Çember aranıyor.");
+  speak(L("Kamera hazır. Çemberi işaretle.", "Camera ready. Mark the rim."));
 }
 async function keepAwake() {
   try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch (e) {}
@@ -302,7 +349,7 @@ function startFile(f) {
     video.playbackRate = slow ? 0.5 : 1;
     try { await video.play(); } catch (e) {}
     onSourceReady(true);
-    setStatus(pose ? "Video açıldı. Çember aranıyor." : (modelsDone ? loadHelp() : "Video açıldı. Modeller hâlâ yükleniyor…"));
+    setStatus(pose ? "Video açıldı. Çemberi işaretle." : (modelsDone ? loadHelp() : "Video açıldı. Modeller hâlâ yükleniyor…"));
   };
   video.src = URL.createObjectURL(f);
 }
@@ -312,49 +359,36 @@ function stopSource() {
   if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
   $("btnFlip").disabled = true;
   video.pause(); video.removeAttribute("src"); video.srcObject = null;
-  ballHist = []; poseHist = []; srcLog = []; shot = null; release = null; lastHeld = null; heldPrev = false; lastVideoTime = -1;
-  trk.kill(); mot.prev = null; mot.ok = false; rimAuto = null; predDraw = null;
+  ballHist = []; poseHist = []; shot = null; release = null; lastHeld = null; heldPrev = false; lastVideoTime = -1;
 }
 function onSourceReady(isFile) {
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  $("placeholder").hidden = true; $("frame").hidden = false; $("btnRim").disabled = false; $("btnRimAuto").disabled = false;
-  $("btnPlay").disabled = !isFile; $("btnSlow").disabled = !isFile; $("btnPlay").textContent = "Duraklat";
-  rim = null; rimTrk = null; rimAuto = null;
-  $("rimInfo").textContent = "Çember aranıyor…";
+  $("placeholder").hidden = true; $("frame").hidden = false; $("btnRim").disabled = false;
+  $("btnPlay").disabled = !isFile; $("btnSlow").disabled = !isFile; $("btnPlay").hidden = !isFile; $("btnSlow").hidden = !isFile; $("btnPlay").textContent = "Duraklat";
+  if (rim) { rim = null; $("rimInfo").textContent = "Yeni görüntü: çemberi yeniden işaretle."; }
+  banner("Şimdi \"Çemberi işaretle\"ye bas.");
+  $("bar").hidden = false; setStep(2);
   $("hud").hidden = false; $("btnFs").hidden = false;
   if (!sessionStart) sessionStart = Date.now();
-  if (!running) { running = true; requestAnimationFrame(loop); }
-  setTimeout(() => { if (!rim && !markingRim && !rimAuto) rimAutoStart("ilk"); }, 600);
+  if (!running) {
+    running = true;
+    if (video.requestVideoFrameCallback) { const tick = () => { processFrame(); video.requestVideoFrameCallback(tick); }; video.requestVideoFrameCallback(tick); }
+    else requestAnimationFrame(loop);
+  }
 }
 
 // ---------- Geometri ----------
 const W = () => canvas.width, H = () => canvas.height;
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const SIDES = { left: { sh: 11, el: 13, wr: 15, hip: 23, kn: 25, an: 27 }, right: { sh: 12, el: 14, wr: 16, hip: 24, kn: 26, an: 28 } };
-const side = (h) => SIDES[h || hand];
-const vis = (p) => p && (p.visibility === undefined || p.visibility > 0.5);
-const ema = (prev, v, a) => (v === null ? prev : (prev === null ? v : prev * (1 - a) + v * a));
-const r0 = (v) => (v === null || v === undefined || Number.isNaN(v) ? null : Math.round(v));
-const rimCx = () => (rim.l + rim.r) / 2;
 function angle(a, b, c) {
   const v1 = [(a.x - b.x) * W(), (a.y - b.y) * H()], v2 = [(c.x - b.x) * W(), (c.y - b.y) * H()];
   const d = Math.hypot(...v1) * Math.hypot(...v2);
   if (!d) return null;
   return Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / d))) * 180 / Math.PI;
 }
-function angle3(a, b, c) {
-  const v1 = [a.x - b.x, a.y - b.y, a.z - b.z], v2 = [c.x - b.x, c.y - b.y, c.z - b.z];
-  const d = Math.hypot(...v1) * Math.hypot(...v2);
-  if (!d) return null;
-  return Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) / d))) * 180 / Math.PI;
-}
-function hsv(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  let h = 0;
-  if (d) { if (mx === r) h = 60 * (((g - b) / d) % 6); else if (mx === g) h = 60 * ((b - r) / d + 2); else h = 60 * ((r - g) / d + 4); if (h < 0) h += 360; }
-  return [h, mx ? d / mx : 0, mx];
-}
-const hueDist = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+const side = () => hand === "left" ? { sh: 11, el: 13, wr: 15, hip: 23, kn: 25, an: 27 } : { sh: 12, el: 14, wr: 16, hip: 24, kn: 26, an: 28 };
+const vis = (p) => p && (p.visibility === undefined || p.visibility > 0.5);
+const ema = (prev, v, a) => (v === null ? prev : (prev === null ? v : prev * (1 - a) + v * a));
+const r0 = (v) => (v === null || v === undefined || Number.isNaN(v) ? null : Math.round(v));
 
 // En küçük kareler ile parabol: y = a·X² + b·X + c, X = x − mx
 function fitParabola(pts) {
@@ -383,553 +417,132 @@ function descendingCross(f, y, dir) {
   return desc.length ? desc[0] : null;
 }
 
-// Bağlı bölgeler (8 komşu): renk maskesindeki lekeleri ayırır
-function components(mask, w, h, minN) {
-  const lab = new Int32Array(w * h), stack = new Int32Array(w * h), out = [];
-  let id = 0;
-  for (let p0 = 0; p0 < w * h; p0++) {
-    if (!mask[p0] || lab[p0]) continue;
-    id++; let sp = 0; stack[sp++] = p0; lab[p0] = id;
-    const c = { n: 0, x0: w, y0: h, x1: 0, y1: 0, sx: 0, sy: 0 };
-    while (sp) {
-      const p = stack[--sp], x = p % w, y = (p / w) | 0;
-      c.n++; c.sx += x; c.sy += y;
-      if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const xx = x + dx, yy = y + dy;
-        if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
-        const q = yy * w + xx;
-        if (mask[q] && !lab[q]) { lab[q] = id; stack[sp++] = q; }
-      }
-    }
-    if (c.n >= (minN || 1)) out.push(c);
+// ---------- Top: renk yardımı ----------
+function colorSearch(near) {
+  const sw = 192, shh = Math.round(sw * H() / W());
+  small.width = sw; small.height = shh;
+  sctx.drawImage(video, 0, 0, sw, shh);
+  const k = sw / W();
+  let x0 = 0, y0 = 0, x1 = sw, y1 = shh;
+  if (near) { const r = Math.max(12, near.r * k * 4); x0 = Math.max(0, Math.floor(near.x * k - r)); y0 = Math.max(0, Math.floor(near.y * k - r)); x1 = Math.min(sw, Math.ceil(near.x * k + r)); y1 = Math.min(shh, Math.ceil(near.y * k + r)); }
+  if (x1 <= x0 || y1 <= y0) return null;
+  const data = sctx.getImageData(x0, y0, x1 - x0, y1 - y0).data, w = x1 - x0;
+  const cell = 6, cells = new Map();
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
+    if (mx < 0.35 || dl / mx < 0.55 || mx !== r) continue;
+    const h = 60 * (((g - b) / dl) % 6);
+    if (h < 5 || h > 28) continue;
+    const x = p % w, y = (p / w) | 0, key = ((x / cell) | 0) + "," + ((y / cell) | 0);
+    const c = cells.get(key) || { n: 0, sx: 0, sy: 0 }; c.n++; c.sx += x; c.sy += y; cells.set(key, c);
   }
-  return out;
-}
-
-// ---------- Hareket haritası: kıpırdamayan turuncuyu (çember, koni, duvar) topla karıştırmamak için ----------
-function updateMotion() {
-  const w = 160, h = Math.max(1, Math.round(160 * H() / W()));
-  if (mot.w !== w || mot.h !== h) { mot.c.width = w; mot.c.height = h; mot.w = w; mot.h = h; mot.prev = null; mot.ok = false; }
-  mot.x.drawImage(video, 0, 0, w, h);
-  const d = mot.x.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
-  for (let i = 0, p = 0; p < g.length; i += 4, p++) g[p] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
-  if (mot.prev) {
-    const m = mot.map && mot.map.length === g.length ? mot.map : new Uint8Array(g.length);
-    for (let p = 0; p < g.length; p++) m[p] = Math.abs(g[p] - mot.prev[p]) > 14 ? 1 : 0;
-    mot.map = m; mot.ok = true;
-  }
-  mot.prev = g; mot.k = w / W();
-  // Sabit turuncu haritası: yarım saniyeden uzun süre kıpırdamadan duran turuncu pikseller (çember, koni, duvar, yerdeki top)
-  if (!mot.st || mot.st.length !== g.length) mot.st = new Uint8Array(g.length);
-  const P = prof(), vMin = P.v * 255;
-  for (let i = 0, p = 0; p < g.length; i += 4, p++) {
-    const R = d[i], G = d[i + 1], B = d[i + 2], mx = Math.max(R, G, B), dl = mx - Math.min(R, G, B);
-    let orange = false;
-    if (mx >= vMin && dl && dl / mx >= P.s) { let h; if (mx === R) h = 60 * (((G - B) / dl) % 6); else if (mx === G) h = 60 * ((B - R) / dl + 2); else h = 60 * ((R - G) / dl + 4); if (h < 0) h += 360; orange = hueDist(h, P.c) <= P.hw; }
-    mot.st[p] = orange && !(mot.ok && mot.map[p]) ? Math.min(250, mot.st[p] + 2) : Math.max(0, mot.st[p] - 3);
-  }
-}
-function staticOrange(x, y) {
-  if (!mot.st) return false;
-  const xx = Math.round(x * mot.k), yy = Math.round(y * mot.k);
-  return xx >= 0 && yy >= 0 && xx < mot.w && yy < mot.h && mot.st[yy * mot.w + xx] >= 60;
-}
-function moving(x, y, rad) {
-  if (!mot.ok) return true;
-  const k = mot.k, cx = Math.round(x * k), cy = Math.round(y * k), R = Math.max(1, Math.round((rad || 0) * k));
-  for (let yy = cy - R; yy <= cy + R; yy++) for (let xx = cx - R; xx <= cx + R; xx++) {
-    if (xx < 0 || yy < 0 || xx >= mot.w || yy >= mot.h) continue;
-    if (mot.map[yy * mot.w + xx]) return true;
-  }
-  return false;
-}
-
-// ---------- Top rengi: model topu kesin görünce rengini öğren ----------
-const DEF_PROF = { c: 16, hw: 13, s: 0.52, v: 0.25 }; // ten ve tahta zemin çoğunlukla daha soluk: karışmasın
-const prof = () => colorProf || DEF_PROF;
-function learnColor(m) {
-  if (m.r < 5) return;
-  const R = m.r * 0.6, n = 16;
-  small.width = n; small.height = n;
-  try { sctx.drawImage(video, m.x - R, m.y - R, 2 * R, 2 * R, 0, 0, n, n); } catch (e) { return; }
-  const d = sctx.getImageData(0, 0, n, n).data, hs = [], ss = [], vs = [];
-  for (let i = 0, p = 0; p < n * n; i += 4, p++) {
-    const x = p % n - n / 2 + 0.5, y = ((p / n) | 0) - n / 2 + 0.5;
-    if (x * x + y * y > n * n / 4) continue;
-    const [hh, s, v] = hsv(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255);
-    if (s < 0.2 || v < 0.12) continue;
-    hs.push(hh); ss.push(s); vs.push(v);
-  }
-  if (hs.length < 60) return;
-  const bins = new Array(36).fill(0); for (const hh of hs) bins[Math.floor(hh / 10) % 36]++;
-  let pk = 0, pv = -1; for (let i = 0; i < 36; i++) { const v = bins[(i + 35) % 36] + bins[i] + bins[(i + 1) % 36]; if (v > pv) { pv = v; pk = i; } }
-  const c0 = pk * 10 + 5;
-  if (!(c0 <= 50 || c0 >= 335)) return; // turuncu-kahverengi değilse (model kafayı ya da başka bir şeyi top sandıysa) öğrenme
-  const dev = hs.map(hh => hueDist(hh, c0)).sort((a, b) => a - b);
-  const q = (a, f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
-  ss.sort((a, b) => a - b); vs.sort((a, b) => a - b);
-  colorSamples.push({ c: c0, hw: clamp(q(dev, 0.85) + 4, 8, 26), s: Math.max(0.22, q(ss, 0.15) * 0.8), v: Math.max(0.1, q(vs, 0.15) * 0.75) });
-  if (colorSamples.length > 8) colorSamples.shift();
-  if (colorSamples.length >= 3) {
-    const med = (k) => { const a = colorSamples.map(x => x[k]).sort((x, y) => x - y); return a[a.length >> 1]; };
-    let sx = 0, sy = 0; for (const x of colorSamples) { sx += Math.cos(x.c * Math.PI / 180); sy += Math.sin(x.c * Math.PI / 180); }
-    let c = Math.atan2(sy, sx) * 180 / Math.PI; if (c < 0) c += 360;
-    colorProf = { c, hw: med("hw"), s: med("s"), v: med("v") };
-  }
-}
-
-// ---------- Top: renkle arama ----------
-// Tahmin edilen yerin çevresinde, top yaklaşık 7 piksel yarıçapa gelecek ölçekte arar; yuvarlak, beklenen boyda ve yakında olan lekeyi seçer.
-// Tahmin yoksa bütün görüntüde yalnızca hareket eden turuncuya bakar.
-// Top yarıçapı için ön bilgi: top çapı (24 cm) çemberin dış çapının (~47 cm) yaklaşık yarısıdır
-const ballR = () => rim ? 0.25 * rim.w : (trk.r || Math.max(6, W() / 60));
-const inRimBand = (x, y) => rim && Math.abs(y - rim.y) < Math.max(4, 0.16 * rim.w) && x > rim.l - 0.12 * rim.w && x < rim.r + 0.12 * rim.w;
-function colorSearch(center, rHint, region, relax) {
-  const P0 = prof(), P = relax ? { c: P0.c, hw: P0.hw + 6, s: P0.s * 0.75, v: P0.v * 0.7 } : P0, global = !center;
-  const r = rHint || Math.max(6, W() / 110);
-  let rx, ry, rw, rh, k;
-  if (center) { const half = Math.min(W() * 0.35, Math.max(r * 5, 26, 3 * trk.sigma())); rx = center.x - half; ry = center.y - half; rw = rh = 2 * half; k = clamp(7 / r, 0.15, 1); }
-  else if (region) { rx = region.x; ry = region.y; rw = region.w; rh = region.h; k = clamp(7 / r, 0.1, 1); }
-  else { rx = 0; ry = 0; rw = W(); rh = H(); k = Math.min(clamp(7 / r, 0.1, 1), 320 / W()); }
-  const x0 = Math.max(0, rx), y0 = Math.max(0, ry), x1 = Math.min(W(), rx + rw), y1 = Math.min(H(), ry + rh);
-  if (x1 - x0 < 4 || y1 - y0 < 4) return null;
-  const sw = Math.max(4, Math.round((x1 - x0) * k)), sh = Math.max(4, Math.round((y1 - y0) * k));
-  const kx = sw / (x1 - x0), ky = sh / (y1 - y0);
-  small.width = sw; small.height = sh;
-  sctx.drawImage(video, x0, y0, x1 - x0, y1 - y0, 0, 0, sw, sh);
-  const d = sctx.getImageData(0, 0, sw, sh).data, mask = new Uint8Array(sw * sh);
-  const vMin = P.v * 255;
-  for (let i = 0, p = 0; p < sw * sh; i += 4, p++) {
-    const R = d[i], G = d[i + 1], B = d[i + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B), dl = mx - mn;
-    if (mx < vMin || !dl || dl / mx < P.s) continue;
-    let h; if (mx === R) h = 60 * (((G - B) / dl) % 6); else if (mx === G) h = 60 * ((B - R) / dl + 2); else h = 60 * ((R - G) / dl + 4); if (h < 0) h += 360;
-    if (hueDist(h, P.c) > P.hw) continue;
-    const vx = x0 + (p % sw + 0.5) / kx, vy = y0 + (((p / sw) | 0) + 0.5) / ky;
-    const mv = moving(vx, vy, 1);
-    if (!mv && ((rim && inRimBand(vx, vy)) || staticOrange(vx, vy))) continue; // kıpırdamayan turuncu top değildir
-    if ((global || relax) && mot.ok && !mv) continue;
-    mask[p] = 1;
-  }
-  let best = null;
-  for (const c of components(mask, sw, sh, 3)) {
-    const bw = c.x1 - c.x0 + 1, bh = c.y1 - c.y0 + 1;
-    const round = Math.min(bw, bh) / Math.max(bw, bh), fill = c.n / (bw * bh);
-    if (round < 0.35) continue;
-    if (global && c.n >= 20 && fill > 0.93) continue; // dolu dikdörtgen (forma, tabela) top değildir
-    const rb = Math.sqrt(c.n / Math.PI) / ((kx + ky) / 2);
-    const cx = x0 + (c.sx / c.n + 0.5) / kx, cy = y0 + (c.sy / c.n + 0.5) / ky;
-    let sc = round * (1 - Math.min(0.8, Math.abs(fill - 0.78))) * Math.sqrt(c.n);
-    if (rHint) sc *= Math.exp(-(((rb - r) / (0.6 * r)) ** 2));
-    if (center) sc *= Math.exp(-((Math.hypot(cx - center.x, cy - center.y) / (3 * r)) ** 2));
-    if (!best || sc > best.score) best = { x: cx, y: cy, r: Math.max(4, rb * 1.08), score: sc, src: "renk", round };
-    best.fill = fill;
-  }
-  if (best && best.score > 0.25) return best;
-  return center && !relax ? colorSearch(center, rHint, region, true) : null;
-}
-
-// ---------- Top: model, yakın planda ----------
-// Uzaktaki top tüm karede birkaç pikseldir ve model onu kaçırır. Tahmin edilen yerin çevresi kırpılıp model girişine büyütülür.
-function sq(cx, cy, s) { s = Math.round(Math.min(s, W(), H())); return { x: Math.round(clamp(cx - s / 2, 0, W() - s)), y: Math.round(clamp(cy - s / 2, 0, H() - s)), s }; }
-function chooseRoi(pred, wrists, torso) {
-  const md = Math.min(W(), H());
-  if (detN % 5 === 0 && !(shot && rim)) return null; // ara sıra tüm kare: kaybolan topu yeniden bulmak için
-  if (pred) return sq(pred.x, pred.y, clamp(Math.max(trk.r * 14, 6 * trk.sigma()), md * 0.2, md));
-  if (shot && rim) return sq(rimCx(), rim.y - 0.5 * rim.w, clamp(rim.w * 5, md * 0.25, md));
-  if (wrists.length) {
-    const cx = wrists.reduce((s, w) => s + w.x, 0) / wrists.length, cy = wrists.reduce((s, w) => s + w.y, 0) / wrists.length;
-    return sq(cx, cy, clamp((torso || md * 0.25) * 2.4, md * 0.3, md));
-  }
-  return null;
-}
-function detectBall(roi) {
-  const t1 = performance.now(), out = [];
-  try {
-    let res, ox = 0, oy = 0, sc = 1;
-    if (roi) { const S = roiC.width; roiX.drawImage(video, roi.x, roi.y, roi.s, roi.s, 0, 0, S, S); res = ball.detect(roiC); ox = roi.x; oy = roi.y; sc = roi.s / S; }
-    else res = ball.detect(video);
-    for (const d of res.detections || []) {
-      const bb = d.boundingBox, w = bb.width * sc, h = bb.height * sc, ar = w / (h || 1);
-      if (ar < 0.55 || ar > 1.8) continue;
-      out.push({ x: ox + (bb.originX + bb.width / 2) * sc, y: oy + (bb.originY + bb.height / 2) * sc, r: Math.max(w, h) / 2, score: d.categories[0].score, src: roi ? "yakın" : "model" });
-    }
-  } catch (e) {}
-  msBall = Math.round(ema(msBall || null, performance.now() - t1, 0.2));
-  return out;
-}
-
-// ---------- Top: yerçekimli Kalman süzgeci ----------
-// Her eksen için konum ve hız. Top havadayken dikeyde yerçekimi uygulanır; topu görmeyen karelerde yol tahminle sürer.
-class Axis {
-  constructor(p, P0, PV) { this.p = p; this.v = 0; this.P = [P0, 0, 0, PV]; }
-  predict(dt, a, q) {
-    const [a00, a01, a10, a11] = this.P, dt2 = dt * dt;
-    this.p += this.v * dt + 0.5 * a * dt2; this.v += a * dt;
-    this.P = [a00 + dt * (a10 + a01) + dt2 * a11 + q * dt2 * dt2 / 4, a01 + dt * a11 + q * dt2 * dt / 2, a10 + dt * a11 + q * dt2 * dt / 2, a11 + q * dt2];
-  }
-  S(rr) { return this.P[0] + rr; }
-  update(z, rr) {
-    const [a00, a01, a10, a11] = this.P, S = a00 + rr, k0 = a00 / S, k1 = a10 / S, y = z - this.p;
-    this.p += k0 * y; this.v += k1 * y;
-    this.P = [(1 - k0) * a00, (1 - k0) * a01, a10 - k1 * a00, a11 - k1 * a01];
-  }
-}
-const trk = {
-  x: null, y: null, r: 0, tk: 0, lastMeas: -1e9, pend: null, round: 1,
-  kill() { this.x = this.y = null; this.r = 0; this.pend = null; this.lastMeas = -1e9; },
-  alive(now) { return !!this.x && now - this.lastMeas < 450; },
-  reset(m, tk, now) { const P0 = (m.r * 0.5) ** 2 + 4, PV = (0.6 * gravity()) ** 2; this.x = new Axis(m.x, P0, PV); this.y = new Axis(m.y, P0, PV); this.r = m.r; this.tk = tk; this.lastMeas = now; this.pend = null; this.round = m.round === undefined ? 1 : m.round; },
-  predict(tk, free, g) {
-    if (!this.x) return null;
-    const dt = clamp(tk - this.tk, 0, 0.12); this.tk = tk;
-    if (dt > 0) { const qa = (free ? 0.4 * g : 3 * g) ** 2; this.x.predict(dt, 0, qa); this.y.predict(dt, free ? g : 0, qa); }
-    return { x: this.x.p, y: this.y.p };
-  },
-  sigma() { return this.x ? Math.sqrt(Math.max(this.x.P[0], this.y.P[0])) : 0; },
-  rr(m) { const s = (m.src === "renk" ? 0.45 : 0.22) * m.r; return s * s + 2; },
-  gate(m) { const rr = this.rr(m), ix = m.x - this.x.p, iy = m.y - this.y.p; return ix * ix / this.x.S(rr) + iy * iy / this.y.S(rr); },
-  update(m, now) { const rr = this.rr(m); this.x.update(m.x, rr); this.y.update(m.y, rr); this.r = this.r ? this.r * 0.7 + m.r * 0.3 : m.r; this.round = this.round * 0.7 + (m.round === undefined ? 1 : m.round) * 0.3; this.lastMeas = now; this.pend = null; }
-};
-// Yerçekimi piksel cinsinden: çember çapı ~0,48 m, top çapı ~0,24 m
-function gravity() { const ppm = rim ? rim.w / 0.48 : (trk.r ? trk.r / 0.12 : W() / 8); return 9.81 * ppm; }
-function trackStatic(now) {
-  const h = ballHist.filter(p => now - p.t < 900);
-  if (h.length < 10 || h.some(p => p.held)) return false;
-  const a = h[h.length - 1];
-  return h.every(p => Math.hypot(p.x - a.x, p.y - a.y) < 1.2 * Math.max(4, trk.r));
-}
-function associate(cands, pred, alive) {
-  if (!cands.length) return null;
-  if (!alive || !pred) {
-    const ok = cands.filter(c => !rim || (c.r < 2.2 * ballR() && c.r > 0.4 * ballR()));
-    if (!ok.length) return null;
-    const b = ok.sort((p, q) => q.score - p.score)[0]; return { ...b, reset: true };
-  }
-  const nearRim = rim && Math.abs(pred.x - rimCx()) < 2 * rim.w && Math.abs(pred.y - rim.y) < 2 * rim.w;
-  let best = null, bestCost = Infinity;
-  for (const c of cands) {
-    const sz = trk.r ? c.r / trk.r : 1;
-    if (sz > 2.6 || sz < 0.35) continue;
-    const dist = Math.hypot(c.x - pred.x, c.y - pred.y), d2 = trk.gate(c);
-    const ok = d2 < 16 || (nearRim && dist < 1.6 * rim.w) || dist < 1.2 * trk.r; // çember çevresinde sekmelere izin ver
-    if (!ok || dist > Math.max(6 * trk.r, W() * 0.3)) continue;
-    const cost = d2 - (c.src !== "renk" ? 4 * c.score : 0);
-    if (cost < bestCost) { bestCost = cost; best = c; }
-  }
-  if (best) return best;
-  // Tahmine uymayan ama üst üste aynı yerde görülen top: iz yeniden başlar (çembere çarpma, ani yön değişimi)
-  const strong = cands.slice().sort((p, q) => q.score - p.score)[0];
-  if (strong && (strong.src !== "renk" ? strong.score >= 0.45 : strong.score >= 1.5)) {
-    if (trk.pend && Math.hypot(strong.x - trk.pend.x, strong.y - trk.pend.y) < 3 * Math.max(strong.r, trk.r)) return { ...strong, reset: true };
-    trk.pend = { x: strong.x, y: strong.y };
-  }
-  return null;
-}
-
-// ---------- Çember: otomatik bulma ----------
-// Yaklaşık yarım saniye boyunca her karede turuncu-kırmızı pikseller sayılır; hep aynı yerde duranlar (sabit) kalır.
-// En iyi aday: yatay ve ince uzun, kadrajın üst kısmında, oyuncunun omzundan yukarıda, altında açık renkli file olan leke.
-function rimAutoStart(why) {
-  if (!video.videoWidth) return;
-  rimAuto = { n: 0, need: 18, why, acc: null, bright: null, w: 0, h: 0 };
-  markingRim = false; rimClicks = [];
-  if (why === "kayıp") banner("Kamera oynadı: çember yeniden aranıyor…", 2500);
-  else { banner("Çember aranıyor, kamerayı sabit tut…"); $("rimInfo").textContent = "Çember aranıyor…"; }
-}
-function rimAutoStep() {
-  const A = rimAuto, w = 256, h = Math.max(1, Math.round(256 * H() / W()));
-  if (!A.acc || A.w !== w || A.h !== h) { A.acc = new Uint16Array(w * h); A.bright = new Uint16Array(w * h); A.w = w; A.h = h; A.n = 0; }
-  small.width = w; small.height = h; sctx.drawImage(video, 0, 0, w, h);
-  const d = sctx.getImageData(0, 0, w, h).data;
-  for (let i = 0, p = 0; p < w * h; i += 4, p++) {
-    const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
-    if (mx >= 150 && dl < 0.25 * mx) A.bright[p]++;
-    if (mx < 50 || dl < 0.45 * mx || mx !== r) continue;
-    let hh = 60 * (((g - b) / dl) % 6); if (hh < 0) hh += 360;
-    if (hh <= 32 || hh >= 335) A.acc[p]++;
-  }
-  A.n++;
-  if (A.n >= A.need) rimAutoFinish();
-}
-function frac(arr, w, h, x0, y0, x1, y1, thr) {
-  x0 = Math.max(0, Math.round(x0)); y0 = Math.max(0, Math.round(y0)); x1 = Math.min(w - 1, Math.round(x1)); y1 = Math.min(h - 1, Math.round(y1));
-  let c = 0, t = 0;
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { t++; if (arr[y * w + x] >= thr) c++; }
-  return t ? c / t : 0;
-}
-function rimAutoFinish() {
-  const A = rimAuto; rimAuto = null;
-  const { w, h, n } = A, thr = Math.ceil(n * 0.6);
-  const m = new Uint8Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = y * w + x; if (A.acc[p] >= thr || (x > 0 && A.acc[p - 1] >= thr) || (x < w - 1 && A.acc[p + 1] >= thr)) m[p] = 1; }
-  let best = null;
-  for (const c of components(m, w, h, 6)) {
-    const bw = c.x1 - c.x0 + 1, bh = c.y1 - c.y0 + 1, cy = (c.y0 + c.y1) / 2;
-    if (bw < Math.max(6, w * 0.025) || bw > w * 0.4 || bw / bh < 2) continue;
-    let s = Math.min(bw / bh, 10) * Math.sqrt(bw);
-    if (cy > h * 0.75) s *= 0.4;
-    const net = frac(A.bright, w, h, c.x0, c.y1 + 2, c.x1, c.y1 + bw * 0.8, thr);
-    if (net > 0.06) s *= 1 + Math.min(1, net * 4);
-    if (lastLm && vis(lastLm[11]) && vis(lastLm[12])) s *= cy < Math.min(lastLm[11].y, lastLm[12].y) * h ? 1.4 : 0.35;
-    if (!best || s > best.s) best = { ...c, s };
-  }
-  if (!best) {
-    if (A.why === "kayıp") { banner("Çember yeniden bulunamadı. Yeşil çizgi kaydıysa \"Elle işaretle\".", 3500); if (rimTrk) rimTrk.fails = -10; return; }
-    $("rimInfo").textContent = "Çember otomatik bulunamadı. \"Elle işaretle\"ye bas, sonra çemberin sol ve sağ kenarına dokun.";
-    banner("Çember bulunamadı: elle işaretle.", 3500);
-    speak("Çember bulunamadı. Elle işaretle.");
-    return;
-  }
-  let ex0 = best.x1, ex1 = best.x0;
-  for (let y = best.y0; y <= best.y1; y++) for (let x = best.x0; x <= best.x1; x++) if (A.acc[y * w + x] >= thr) { if (x < ex0) ex0 = x; if (x > ex1) ex1 = x; }
-  if (ex1 < ex0) { ex0 = best.x0; ex1 = best.x1; }
-  const k = w / W(), l = ex0 / k, r = (ex1 + 1) / k, y = (best.y0 + best.y1 + 1) / 2 / k;
-  setRim({ l, r, w: r - l, y }, "otomatik", A.why === "kayıp");
-}
-function setRim(r, src, quiet) {
-  rim = r; rimSrc = src; rimTrk = null; markingRim = false; rimClicks = []; shot = null;
-  $("rimInfo").textContent = src === "otomatik"
-    ? "Çember otomatik bulundu ve izleniyor. Yeşil çizgi çemberin üstünde değilse \"Elle işaretle\"."
-    : "Çember işaretlendi ve izleniyor. Şut atmaya başlayabilirsin.";
-  if (!quiet) {
-    banner(src === "otomatik" ? "Çember bulundu. Şutlar otomatik sayılacak." : "Hazır. Şutlar otomatik sayılacak.", 2200);
-    if (src === "otomatik") speak("Çember bulundu. Şut atmaya başlayabilirsin.");
-  }
-}
-
-// ---------- Çember: kamera kayarsa izleme ----------
-// Çemberin ve panyanın çevresinden gri bir şablon alınır; 0,4 saniyede bir yakın çevrede en iyi eşleşen yer aranır (normalize çapraz ilinti).
-function grayRegion(x, y, w, h, ks) {
-  const gw = Math.max(4, Math.round(w * ks)), gh = Math.max(4, Math.round(h * ks));
-  small.width = gw; small.height = gh; sctx.drawImage(video, x, y, w, h, 0, 0, gw, gh);
-  const d = sctx.getImageData(0, 0, gw, gh).data, g = new Float32Array(gw * gh);
-  for (let i = 0, p = 0; p < g.length; i += 4, p++) g[p] = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-  return { g, w: gw, h: gh };
-}
-function rimTplCapture(now) {
-  const ks = clamp(44 / rim.w, 0.12, 1);
-  const x0 = Math.max(0, rim.l - 0.5 * rim.w), x1 = Math.min(W(), rim.r + 0.5 * rim.w), y0 = Math.max(0, rim.y - 1.2 * rim.w), y1 = Math.min(H(), rim.y + 0.25 * rim.w);
-  if (x1 - x0 < 8 || y1 - y0 < 8) return;
-  const G = grayRegion(x0, y0, x1 - x0, y1 - y0, ks);
-  let m = 0; for (const v of G.g) m += v; m /= G.g.length;
-  let sd = 0; for (const v of G.g) sd += (v - m) * (v - m); sd = Math.sqrt(sd / G.g.length);
-  rimTrk = { g: G.g, tw: G.w, th: G.h, ks, ax: x0, ay: y0, aw: x1 - x0, ah: y1 - y0, base: { ...rim }, dx: 0, dy: 0, fails: 0, last: now, cap: now, conf: 1, flat: sd < 6 };
-}
-function ncc(S, Tp, u, v, step) {
-  let n = 0, sI = 0, sII = 0, sT = 0, sTT = 0, sTI = 0;
-  for (let y = 0; y < Tp.th; y += step) {
-    const ro = (v + y) * S.w + u, to = y * Tp.tw;
-    for (let x = 0; x < Tp.tw; x += step) { const I = S.g[ro + x], t = Tp.g[to + x]; n++; sI += I; sII += I * I; sT += t; sTT += t * t; sTI += t * I; }
-  }
-  const cov = sTI - sT * sI / n, vI = sII - sI * sI / n, vT = sTT - sT * sT / n;
-  return vI > 1 && vT > 1 ? cov / Math.sqrt(vI * vT) : 0;
-}
-function rimTrackStep(now, wrists, b, head) {
-  if (!rim || rimAuto || markingRim) return;
-  if (!rimTrk) { rimTplCapture(now); return; }
-  if (rimTrk.flat || now - rimTrk.last < 400) return;
-  rimTrk.last = now;
-  const Tp = rimTrk, ax = Tp.ax + Tp.dx, ay = Tp.ay + Tp.dy, pad = 0.3 * rim.w;
-  const inside = (p) => p && p.x > ax - pad && p.x < ax + Tp.aw + pad && p.y > ay - pad && p.y < ay + Tp.ah + pad;
-  if (inside(b) || inside(head) || wrists.some(inside)) return; // önü kapalıyken ölçme
-  const Rs = Math.max(6, Math.round(0.6 * rim.w * Tp.ks)), Rv = Rs / Tp.ks;
-  const x0 = Math.max(0, ax - Rv), y0 = Math.max(0, ay - Rv), x1 = Math.min(W(), ax + Tp.aw + Rv), y1 = Math.min(H(), ay + Tp.ah + Rv);
-  if (x1 - x0 < 8 || y1 - y0 < 8) return;
-  const S = grayRegion(x0, y0, x1 - x0, y1 - y0, Tp.ks);
-  const ox = Math.round((ax - x0) * Tp.ks), oy = Math.round((ay - y0) * Tp.ks), uMax = S.w - Tp.tw, vMax = S.h - Tp.th;
-  if (uMax < 0 || vMax < 0) return;
-  let best = -2, bu = clamp(ox, 0, uMax), bv = clamp(oy, 0, vMax);
-  for (let v = Math.max(0, oy - Rs); v <= Math.min(vMax, oy + Rs); v += 2)
-    for (let u = Math.max(0, ox - Rs); u <= Math.min(uMax, ox + Rs); u += 2) { const c = ncc(S, Tp, u, v, 2); if (c > best) { best = c; bu = u; bv = v; } }
-  const cu = bu, cv = bv; best = -2;
-  for (let v = Math.max(0, cv - 1); v <= Math.min(vMax, cv + 1); v++)
-    for (let u = Math.max(0, cu - 1); u <= Math.min(uMax, cu + 1); u++) { const c = ncc(S, Tp, u, v, 1); if (c > best) { best = c; bu = u; bv = v; } }
-  if (best >= 0.6) {
-    const ddx = (bu - ox) / Tp.ks, ddy = (bv - oy) / Tp.ks;
-    if (Math.abs(ddx) > 0.75 || Math.abs(ddy) > 0.75) {
-      Tp.dx += ddx; Tp.dy += ddy;
-      rim = { l: Tp.base.l + Tp.dx, r: Tp.base.r + Tp.dx, y: Tp.base.y + Tp.dy, w: Tp.base.w };
-    }
-    Tp.fails = 0; Tp.conf = best;
-    if (best > 0.92 && now - Tp.cap > 20000 && Math.hypot(Tp.dx, Tp.dy) > 2) rimTrk = null; // yeni yerinde şablonu tazele
-  } else {
-    Tp.fails++; Tp.conf = Math.max(0, best);
-    if (Tp.fails >= 6) { Tp.fails = 0; rimAutoStart("kayıp"); }
-  }
-}
-
-// ---------- Vücut ----------
-// One Euro süzgeci: yavaş hareketlerde titreşimi alır, hızlı harekette (bırakış) gecikme yapmaz
-class OneEuro {
-  constructor(mc, beta, dc) { this.mc = mc; this.b = beta; this.dc = dc; this.x = null; this.dx = 0; this.t = 0; }
-  reset() { this.x = null; }
-  filter(v, t) {
-    if (this.x === null || t - this.t > 0.35 || t <= this.t) { this.x = v; this.dx = 0; this.t = t; return v; }
-    const dt = t - this.t; this.t = t;
-    const a = (cut) => 1 / (1 + 1 / (2 * Math.PI * cut * dt));
-    this.dx += a(this.dc) * ((v - this.x) / dt - this.dx);
-    this.x += a(this.mc + this.b * Math.abs(this.dx)) * (v - this.x);
-    return this.x;
-  }
-}
-const F2 = Array.from({ length: 33 }, () => [new OneEuro(1.2, 6, 1), new OneEuro(1.2, 6, 1)]);
-const F3 = Array.from({ length: 33 }, () => [new OneEuro(1.2, 3, 1), new OneEuro(1.2, 3, 1), new OneEuro(1.2, 3, 1)]);
-function resetPoseFilters() { for (const f of F2) f.forEach(x => x.reset()); for (const f of F3) f.forEach(x => x.reset()); }
-function box(lmk) {
-  const v = lmk.filter(vis); if (v.length < 6) return null;
-  const xs = v.map(p => p.x), ys = v.map(p => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  return { x0, x1, y0, y1, area: (x1 - x0) * (y1 - y0) };
-}
-function iou(a, b) { const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0)), i = ix * iy; return i / ((a.area + b.area - i) || 1); }
-// Şutu atan: büyük görünen, önceki karedeki kişiyle örtüşen ve bilekleri topa yakın olan
-function pickShooter(list) {
-  let best = 0, bestS = -Infinity;
-  const bp = trk.x ? { x: trk.x.p / W(), y: trk.y.p / H() } : null;
-  list.forEach((lmk, i) => {
-    const bx = box(lmk); if (!bx) return;
-    let s = bx.area * 4;
-    if (shooterBox) s += iou(bx, shooterBox) * 3;
-    if (bp) { const ws = [15, 16].filter(j => vis(lmk[j])).map(j => Math.hypot(lmk[j].x - bp.x, lmk[j].y - bp.y)); if (ws.length) s += Math.max(0, 1.5 - Math.min(...ws) * 6); }
-    if (s > bestS) { bestS = s; best = i; }
-  });
-  const bx = box(list[best]);
-  if (bx) { if (shooterBox && iou(bx, shooterBox) < 0.1) resetPoseFilters(); shooterBox = bx; }
-  return best;
-}
-function filterPose(raw, rawW, now) {
-  const t = now / 1000;
-  const lm = raw.map((p, i) => ({ x: F2[i][0].filter(p.x, t), y: F2[i][1].filter(p.y, t), visibility: p.visibility }));
-  const wl = rawW ? rawW.map((p, i) => ({ x: F3[i][0].filter(p.x, t), y: F3[i][1].filter(p.y, t), z: F3[i][2].filter(p.z, t) })) : null;
-  return { lm, wl };
-}
-function sideAngles(lm, wl, s, use3) {
-  const ok = (...ix) => ix.every(i => vis(lm[i]));
-  const el = ok(s.sh, s.el, s.wr) ? (use3 ? angle3(wl[s.sh], wl[s.el], wl[s.wr]) : angle(lm[s.sh], lm[s.el], lm[s.wr])) : null;
-  const kn = ok(s.hip, s.kn, s.an) ? (use3 ? angle3(wl[s.hip], wl[s.kn], wl[s.an]) : angle(lm[s.hip], lm[s.kn], lm[s.an])) : null;
-  return { el, kn, wa: vis(lm[s.wr]) && vis(lm[s.sh]) && lm[s.wr].y < lm[s.sh].y };
-}
-// Omuz genişliği gövde boyuna göre büyükse kamera tam yandan değil: açılar 3 boyutlu iskeletten ölçülür
-function poseFrame(lm, wl, now) {
-  const len = (a, b) => (vis(lm[a]) && vis(lm[b])) ? Math.hypot((lm[a].x - lm[b].x) * W(), (lm[a].y - lm[b].y) * H()) : 0;
-  const sw = len(11, 12), tl = Math.max(len(11, 23), len(12, 24));
-  const use3 = tl > 0 && sw / tl > 0.45 && !!wl;
-  return { t: now, mode: use3 ? "3B" : "2B", L: sideAngles(lm, wl, SIDES.left, use3), R: sideAngles(lm, wl, SIDES.right, use3) };
-}
-function armCheck(lm, now) {
-  const s = side(), o = side(hand === "left" ? "right" : "left");
-  const v = (i) => (lm[i] && lm[i].visibility !== undefined ? lm[i].visibility : 1);
-  armVis.push({ t: now, me: (v(s.sh) + v(s.el) + v(s.wr)) / 3, other: (v(o.sh) + v(o.el) + v(o.wr)) / 3 });
-  armVis = armVis.filter(a => now - a.t < 3000);
-  if (armWarned || armVis.length < 40) return;
-  const me = armVis.reduce((x, a) => x + a.me, 0) / armVis.length, ot = armVis.reduce((x, a) => x + a.other, 0) / armVis.length;
-  if (me < 0.55 && ot > 0.75) { armWarned = true; banner("Şut kolun kameranın ters tarafında kalıyor; açılar zayıf ölçülür. Kamerayı karşı tarafa al.", 5000); }
+  let best = null; for (const c of cells.values()) if (!best || c.n > best.n) best = c;
+  if (!best || best.n < 5) return null;
+  return { x: (x0 + best.sx / best.n) / k, y: (y0 + best.sy / best.n) / k, r: Math.max(6, Math.sqrt(best.n / Math.PI) / k * 1.4), src: "renk" };
 }
 
 // ---------- Ana döngü ----------
-function loop() {
-  requestAnimationFrame(loop);
+function loop() { requestAnimationFrame(loop); processFrame(); }
+// Modellere küçültülmüş kare verilir (modeller zaten içeride küçültüyor; tam boy kare boşuna iş)
+const proc = document.createElement("canvas"), pctx = proc.getContext("2d");
+function procFrame() {
+  const pw = Math.min(480, W()), ph = Math.round(pw * H() / W());
+  if (proc.width !== pw || proc.height !== ph) { proc.width = pw; proc.height = ph; }
+  pctx.drawImage(video, 0, 0, pw, ph);
+  return { src: proc, k: W() / pw };
+}
+function processFrame() {
   if (video.readyState < 2 || video.currentTime === lastVideoTime) return;
-  const vt = video.currentTime; lastVideoTime = vt;
+  lastVideoTime = video.currentTime;
   let ts = Math.round(performance.now()); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;
-  const now = ts, tk = stream ? now / 1000 : vt; // Kalman saati: videoda videonun kendi zamanı (yavaş oynatmada da yerçekimi doğru kalır)
+  const now = ts;
   ctx.clearRect(0, 0, W(), H());
-  frameNo++; fpsCount++;
+  frameNo++;
+  fpsCount++;
   if (now - fpsT > 1000) {
     fps = Math.round(fpsCount * 1000 / (now - fpsT)); fpsCount = 0; fpsT = now;
     const low = fps && fps < 20;
     $("hFps").style.color = low ? "var(--bad)" : "var(--muted)";
-    $("hFps").textContent = (stream ? `Görüntü ${camFps || "?"} kare/sn (${camRes}) · ` : "") + `takip ${fps} kare/sn · vücut ${msPose} ms, top ${msBall} ms` + (low ? `: hassas modelleri kapat${stream ? "" : " ya da yavaş oynat"}.` : "");
-    const rec = srcLog.filter(s => now - s.t < 3000), tot = rec.length || 1, pc = (k) => Math.round(rec.filter(s => s.s === k).length / tot * 100);
-    $("hTrk").textContent = (rec.length ? `top: model %${pc("model") + pc("yakın")} (yakın plan %${pc("yakın")}) · renk %${pc("renk")} · tahmin %${pc("tahmin")}` : "top aranıyor")
-      + (rim ? ` · çember ${rimSrc}${rimTrk && !rimTrk.flat ? (rimTrk.conf >= 0.6 ? ", izleniyor" : ", emin değil") : ""}` : (rimAuto ? " · çember aranıyor" : ""));
+    $("hFps").textContent = (stream ? `Görüntü ${camFps || "?"} kare/sn (${camRes}) · ` : "") + `takip ${fps} kare/sn · vücut ${msPose} ms, top ${msBall} ms` + (low ? `: hassas modeli kapat${stream ? "" : " ya da yavaş oynat"}.` : "");
     if (sessionStart) { const sec = Math.floor((Date.now() - sessionStart) / 1000); $("hTime").textContent = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); }
   }
-  updateMotion();
-  if (rimAuto) rimAutoStep();
 
-  // Vücut: top havadayken model 3 karede bir çalışır (o an top takibi daha önemli); aradaki karelerde son iskelet kullanılır
-  let lm = null, wl = null, fresh = false;
-  if (pose && (!shot || frameNo % 3 === 0)) {
+  // Vücut
+  // Top havadayken vücut modeli 3 karede bir çalışır (o an top takibi daha önemli); aradaki karelerde son iskelet kullanılır
+  let lm = null, fresh = false;
+  // Her karede tek model: normalde vücut ve top sırayla; şut sırasında top öncelikli
+  const last0 = ballHist.length ? ballHist[ballHist.length - 1] : null;
+  const near0 = rim && last0 && now - last0.t < 400 && Math.abs(last0.x - (rim.l + rim.r) / 2) < 2.5 * rim.w && last0.y < rim.y + 2.5 * rim.w;
+  let runPose, runBall;
+  if (shot && near0) { runBall = true; runPose = false; }
+  else if (shot) { runBall = frameNo % 3 !== 0; runPose = !runBall; }
+  else { runPose = frameNo % 2 === 0; runBall = !runPose; }
+  const pf = ((runPose && pose) || (runBall && ball)) ? procFrame() : null;
+  if (pose && runPose) {
     const t0 = performance.now();
-    try {
-      const r = pose.detectForVideo(video, ts);
-      if (r.landmarks && r.landmarks.length) {
-        const i = pickShooter(r.landmarks);
-        ({ lm, wl } = filterPose(r.landmarks[i], r.worldLandmarks ? r.worldLandmarks[i] : null, now));
-        fresh = true; lastLm = lm; lastWl = wl; lastLmT = now;
-      }
-    } catch (e) {}
+    try { const r = pose.detectForVideo(pf.src, ts); lm = (r.landmarks && r.landmarks[0]) || null; fresh = true; lastLm = lm; lastLmT = now; } catch (e) {}
     msPose = Math.round(ema(msPose || null, performance.now() - t0, 0.2));
   }
-  if (!fresh && lastLm && now - lastLmT < 250) { lm = lastLm; wl = lastWl; }
-  const wrists = []; let torso = null, frame = null, head = null;
+  if (!fresh && lastLm && now - lastLmT < 250) lm = lastLm;
+  let wrists = [], torso = null, frame = null;
   if (lm) {
     drawSkeleton(lm);
-    if (fresh) { frame = poseFrame(lm, wl, now); poseHist.push(frame); armCheck(lm, now); }
-    else frame = poseHist.length ? poseHist[poseHist.length - 1] : null;
-    const s = side(), F = frame && frame[hand === "left" ? "L" : "R"];
-    if (F && F.el !== null) label(lm[s.el], r0(F.el) + "°");
-    if (F && F.kn !== null) label(lm[s.kn], r0(F.kn) + "°");
-    for (const i of [15, 16]) if (vis(lm[i])) wrists.push({ x: lm[i].x * W(), y: lm[i].y * H(), i });
-    if (vis(lm[s.sh]) && vis(lm[s.hip])) torso = Math.hypot((lm[s.sh].x - lm[s.hip].x) * W(), (lm[s.sh].y - lm[s.hip].y) * H());
-    if (vis(lm[0])) head = { x: lm[0].x * W(), y: lm[0].y * H() };
-  }
-  poseHist = poseHist.filter(p => now - p.t < 4000);
-
-  // Top: tahmin → aday tespitler (model yakın planda, gerekirse renk) → tahmine uyan aday → süzgeç güncellemesi
-  const lastB = ballHist.length ? ballHist[ballHist.length - 1] : null;
-  const recent = lastB && now - lastB.t < 400 ? lastB : null;
-  const pred = trk.predict(tk, !(recent && recent.held), gravity());
-  const alive = trk.alive(now);
-  const nearHoop = rim && alive && pred && Math.abs(pred.x - rimCx()) < 2.5 * rim.w && pred.y < rim.y + 2.5 * rim.w;
-  const runBall = !!ball && ((shot && nearHoop) || frameNo % (shot ? 2 : 3) === 0);
-  let cands = [];
-  if (runBall) { detN++; cands = detectBall(chooseRoi(alive ? pred : null, wrists, torso)); }
-  let m = associate(cands, pred, alive);
-  if (!m && (colorAssist || !ball || (!runBall && alive))) {
-    const zone = shot && rim && !alive ? { x: rim.l - 2 * rim.w, y: rim.y - 3.5 * rim.w, w: rim.r - rim.l + 4 * rim.w, h: 6.5 * rim.w } : null;
-    const c = colorSearch(alive ? pred : null, alive ? trk.r : ballR(), zone);
-    if (c) m = associate([c], pred, alive);
-  }
-  // İz yerinde sayıp duruyorsa (ör. top sanılan sabit bir şey) ve başka yerde hareket eden yuvarlak turuncu varsa ona geç
-  const stuck = alive && trackStatic(now);
-  if (alive && (stuck || frameNo % 3 === 0) && (colorAssist || !ball)) {
-    const off = rim && (trk.r > 1.8 * ballR() || trk.r < 0.5 * ballR());
-    if (stuck || trk.round < 0.62 || off) {
-      const gc = colorSearch(null, ballR());
-      if (gc && gc.score > (stuck ? 0.6 : 1) && gc.round >= 0.6 && Math.hypot(gc.x - trk.x.p, gc.y - trk.y.p) > 4 * trk.r && (!rim || (gc.r < 2.2 * ballR() && gc.r > 0.4 * ballR()))) m = { ...gc, reset: true };
+    const s = side();
+    if (fresh) {
+      if (now - smooth.t > 300) { smooth.el = null; smooth.kn = null; }
+      const elRaw = (vis(lm[s.sh]) && vis(lm[s.el]) && vis(lm[s.wr])) ? angle(lm[s.sh], lm[s.el], lm[s.wr]) : null;
+      const knRaw = (vis(lm[s.hip]) && vis(lm[s.kn]) && vis(lm[s.an])) ? angle(lm[s.hip], lm[s.kn], lm[s.an]) : null;
+      smooth.el = ema(smooth.el, elRaw, 0.5); smooth.kn = ema(smooth.kn, knRaw, 0.5); smooth.t = now;
+      frame = { t: now, el: elRaw === null ? null : smooth.el, kn: knRaw === null ? null : smooth.kn, wristAbove: vis(lm[s.wr]) && vis(lm[s.sh]) && lm[s.wr].y < lm[s.sh].y };
+      poseHist.push(frame);
+    } else {
+      frame = poseHist.length ? poseHist[poseHist.length - 1] : null;
     }
+    if (frame && frame.el !== null) label(lm[s.el], r0(frame.el) + "°");
+    if (frame && frame.kn !== null) label(lm[s.kn], r0(frame.kn) + "°");
+    for (const i of [15, 16]) if (vis(lm[i])) wrists.push({ x: lm[i].x * W(), y: lm[i].y * H() });
+    if (vis(lm[s.sh]) && vis(lm[s.hip])) torso = Math.hypot((lm[s.sh].x - lm[s.hip].x) * W(), (lm[s.sh].y - lm[s.hip].y) * H());
   }
-  let b = null; predDraw = null;
-  if (m) {
-    if (m.reset) trk.reset(m, tk, now); else trk.update(m, now);
-    b = { x: trk.x.p, y: trk.y.p, r: trk.r, vx: trk.x.v, vy: trk.y.v, src: m.src, fresh: !!m.reset };
-    if (m.src !== "renk" && m.score >= 0.5 && !inRimBand(m.x, m.y)) learnColor(m);
-    srcLog.push({ t: now, s: m.src });
-  } else if (alive && pred) {
-    predDraw = { x: pred.x, y: pred.y, r: trk.r };
-    srcLog.push({ t: now, s: "tahmin" });
-  }
-  srcLog = srcLog.filter(s => now - s.t < 6000);
+  poseHist = poseHist.filter(p => now - p.t < 3000);
 
-  // Top elde mi? Bırakış anı ve şutu atan el
+  // Top
+  const last = ballHist.length ? ballHist[ballHist.length - 1] : null;
+  const recent = last && now - last.t < 400 ? last : null;
+  let b = null;
+  // Top modeli ağırdır: şut sırasında 2, diğer zamanlarda 3 karede bir çalışır; aradaki karelerde top rengiyle izlenir
+  if (ball && runBall) {
+    const t1 = performance.now();
+    try {
+      const r = ball.detectForVideo(pf.src, ts), k = pf.k;
+      const ds = (r.detections || []).map(d => { const bb = d.boundingBox; return { x: (bb.originX + bb.width / 2) * k, y: (bb.originY + bb.height / 2) * k, r: Math.max(bb.width, bb.height) / 2 * k, score: d.categories[0].score, src: "model" }; });
+      if (ds.length) { ds.sort((p, q) => recent ? Math.hypot(p.x - recent.x, p.y - recent.y) - Math.hypot(q.x - recent.x, q.y - recent.y) : q.score - p.score); b = ds[0]; }
+    } catch (e) {}
+    msBall = Math.round(ema(msBall || null, performance.now() - t1, 0.2));
+  }
+  if (!b && (colorAssist || (!runBall && recent))) b = colorSearch(recent);
+  if (b && recent) {
+    const jump = Math.hypot(b.x - recent.x, b.y - recent.y);
+    const sizeRatio = b.r / (recent.r || b.r);
+    if (jump > W() * 0.35 || sizeRatio > 2.5 || sizeRatio < 0.4) b = null; // ani sıçrama ya da boyut değişimi: yanlış tespit
+  }
+
+  // Top elde mi? Bırakış anı
   if (b) {
     const reach = Math.max(b.r * 2.2, (torso || b.r * 5) * 0.45);
-    let wNear = null, wd = Infinity;
-    for (const w of wrists) { const dd = Math.hypot(w.x - b.x, w.y - b.y); if (dd < wd) { wd = dd; wNear = w; } }
-    b.held = !!wNear && wd < reach;
+    b.held = wrists.some(w => Math.hypot(w.x - b.x, w.y - b.y) < reach);
     b.t = now;
-    if (b.held) lastHeld = { t: now, x: b.x, y: b.y, wrist: wNear.i };
-    else if (heldPrev && lastHeld && b.vy < 0) release = { t: now, hand: lastHeld.wrist === 15 ? "left" : "right" };
+    if (b.held) { lastHeld = { t: now, frame, x: b.x, y: b.y }; }
+    else if (heldPrev && lastHeld && recent && b.y < recent.y) {
+      release = { t: now, elbow: lastHeld.frame ? lastHeld.frame.el : null, form: readForm(now) };
+    }
     heldPrev = b.held;
     ballHist.push(b);
   }
   ballHist = ballHist.filter(p => now - p.t < 3000);
   drawBall();
 
-  if (rim) { if (!shot) rimTrackStep(now, wrists, b, head); drawRim(); updateArm(b, now); shotLogic(b, recent, now); }
+  if (rim) { drawRim(); updateArm(b, now); shotLogic(b, recent, now); }
   if (markingRim) drawRimClicks();
 }
 
@@ -944,16 +557,15 @@ function updateArm(b, now) {
   const cx = (rim.l + rim.r) / 2;
   if (Math.abs(b.x - cx) > 2.5 * rim.w && b.y > rim.y) armed = true;
 }
+// UPDATEARM_END
 function startShot(now) {
-  const relOk = !!(release && now - release.t < 1800);
-  const from = relOk ? release.t : now - 1000;
-  const sh = relOk ? release.hand : null;
+  const from = release && now - release.t < 1800 ? release.t : now - 1000;
   shot = {
     start: now, deadline: now + 2600, rattled: false, touched: false, pending: null,
     pts: ballHist.filter(p => p.t >= from && !p.held).map(p => ({ x: p.x, y: p.y, t: p.t })),
     trace: ballHist.filter(p => p.t >= from).map(p => ({ x: p.x, y: p.y })),
-    lastAbove: null, lastSeen: null, releaseKnown: relOk, hand: sh, from,
-    form: readFormAt(relOk ? release.t : now - 600, (sh || hand) === "left" ? "L" : "R")
+    lastAbove: null, lastSeen: null, form: release && now - release.t < 1800 ? { ...release.form, elbowRel: release.elbow } : readForm(now),
+    releaseKnown: !!(release && now - release.t < 1800)
   };
   release = null;
 }
@@ -967,7 +579,6 @@ function shotLogic(b, prev, now) {
     }
     return;
   }
-  if (b && b.fresh && shot.lastSeen && Math.hypot(b.x - shot.lastSeen.x, b.y - shot.lastSeen.y) > 1.5 * w) b = null; // yeni iz, son görülen yerden uzakta: bu topa ait olmayabilir
   if (b && !b.held) { shot.trace.push({ x: b.x, y: b.y }); shot.lastSeen = { x: b.x, y: b.y, t: now }; }
   // Top yeniden oyuncunun elindeyse bu şut bitmiştir (sekmeyi tutup tekrar atma ayrı şut sayılır)
   if (b && b.held && now - shot.start > 400 && !shot.pending) return finishShot(false, now, { method: "top oyuncuya döndü" });
@@ -1000,12 +611,10 @@ function shotLogic(b, prev, now) {
       const a = shot.lastAbove;
       const f = (rimY - a.y) / ((b.y - a.y) || 1);
       const xCross = a.x + (b.x - a.x) * f;
-      let inside = xCross > l + 0.05 * w && xCross < r - 0.05 * w, method = (b.t - a.t) > 120 ? "file" : "geçiş";
-      // Çembere değdi ve arada kareler kayboldu: doğrusal kesişim güvenilmez; top çemberin tam altında görülüyorsa içeri düşmüştür
-      if (!inside && shot.touched && b.t - a.t > 120 && Math.abs(b.x - cx) < 0.45 * w && b.y < rimY + 1.6 * w) { inside = true; method = "file (çembere değdi)"; }
+      const inside = xCross > l + 0.05 * w && xCross < r - 0.05 * w;
       if (!inside) return finishShot(false, now, { method: "dışarıdan geçti", xCross });
       if (Math.abs(b.x - cx) > 0.95 * w) return finishShot(false, now, { method: "yana savruldu", xCross });
-      shot.pending = { t: now, xCross, method };
+      shot.pending = { t: now, xCross, method: (b.t - a.t) > 120 ? "file" : "geçiş" };
       return;
     } else if (b.y > rimY + 0.15 * w && !shot.lastAbove) {
       return finishShot(false, now, { method: "çember altında" });
@@ -1025,16 +634,12 @@ function shotLogic(b, prev, now) {
     finishShot(false, now, { method: "zaman aşımı" });
   }
 }
-// Form, bırakış anına göre okunur: diz ve set noktası bırakıştan önceki 1,5 sn, bırakış dirseği bırakışın ±0,2 sn çevresi
-function readFormAt(tRel, sk) {
-  const pre = poseHist.filter(p => p.t >= tRel - 1500 && p.t <= tRel + 60), around = poseHist.filter(p => p.t >= tRel - 200 && p.t <= tRel + 200);
-  const kn = pre.map(p => p[sk].kn).filter(v => v !== null), set = pre.filter(p => p[sk].wa && p[sk].el !== null).map(p => p[sk].el);
-  const rel = around.map(p => p[sk].el).filter(v => v !== null), all = pre.map(p => p[sk].el).filter(v => v !== null);
-  return {
-    kneeMin: kn.length ? Math.min(...kn) : null, elbowSet: set.length ? Math.min(...set) : null,
-    elbowRel: rel.length ? Math.max(...rel) : (all.length ? Math.max(...all) : null),
-    mode: pre.concat(around).some(p => p.mode === "3B") ? "3B" : "2B"
-  };
+function readForm(now) {
+  const win = poseHist.filter(p => now - p.t < 1500);
+  const knees = win.map(p => p.kn).filter(v => v !== null);
+  const setEls = win.filter(p => p.wristAbove && p.el !== null).map(p => p.el);
+  const allEls = win.map(p => p.el).filter(v => v !== null);
+  return { kneeMin: knees.length ? Math.min(...knees) : null, elbowSet: setEls.length ? Math.min(...setEls) : null, elbowRel: allEls.length ? Math.max(...allEls) : null };
 }
 function finishShot(make, now, info) {
   const s = shot; shot = null; cooldownUntil = now + 700; armed = false; lastDecisionT = now;
@@ -1051,12 +656,7 @@ function finishShot(make, now, info) {
   const pos = (info.xCross !== undefined && info.xCross !== null) ? Math.round((info.xCross - rim.l) / rim.w * 100) : null;
   const step = Math.max(1, Math.ceil(s.trace.length / 14));
   const trace = s.trace.filter((p, k) => k % step === 0).map(p => ((p.x - (rim.l + rim.r) / 2) / rim.w).toFixed(1) + "," + ((rim.y - p.y) / rim.w).toFixed(1)).join(" ");
-  const src = {}; srcLog.filter(x => x.t >= s.from && x.t <= now).forEach(x => { src[x.s] = (src[x.s] || 0) + 1; });
-  const rec = {
-    make, auto: true, method: info.method, pos, trace, hand: s.hand, mode: s.form.mode,
-    src: Object.keys(src).map(k => k + " " + src[k]).join(", "),
-    kneeMin: r0(s.form.kneeMin), elbowSet: r0(s.form.elbowSet), elbowRel: r0(s.form.elbowRel), releaseAngle: r0(releaseAngle), entryAngle: r0(entryAngle)
-  };
+  const rec = { make, auto: true, method: info.method, pos, trace, kneeMin: r0(s.form.kneeMin), elbowSet: r0(s.form.elbowSet), elbowRel: r0(s.form.elbowRel), releaseAngle: r0(releaseAngle), entryAngle: r0(entryAngle) };
   rec.cue = coachCue(rec);
   shots.push(rec);
   lastFit = fit; lastFitUntil = now + 1500;
@@ -1065,13 +665,6 @@ function finishShot(make, now, info) {
   const madeNow = shots.filter(x => x.make).length;
   let say = (make ? "İsabet." : "Kaçtı.") + (rec.cue ? " " + rec.cue : "");
   if (goal && !goalDone && madeNow >= goal) { goalDone = true; say += ` Hedef tamam! ${goal} isabet.`; banner(`Hedef tamam: ${goal} isabet!`, 2500); }
-  // Şut eli: son 3 şut diğer elle atıldıysa seçimi kendiliğinden değiştir
-  if (s.hand) {
-    if (s.hand !== hand) {
-      handVotes.push(s.hand);
-      if (handVotes.length >= 3) { const h = s.hand; setHand(h); say += ` Şut elin ${h === "left" ? "sol" : "sağ"} olarak değiştirildi.`; banner(`Şut elin ${h === "left" ? "sol" : "sağ"} olarak değiştirildi: son 3 şut o elle atıldı.`, 3500); }
-    } else handVotes = [];
-  }
   speak(say);
   render();
 }
@@ -1087,13 +680,22 @@ function coachCue(r) {
   if (r.entryAngle !== null && r.entryAngle < 38) return "Top düz gidiyor, kavsi yükselt.";
   return "";
 }
+const L = (tr) => tr;
+function speak(text) {
+  if (!voiceOn || !text || !("speechSynthesis" in window)) return;
+  const lg = window.GA_LANG || "tr";
+  const VOICE = { tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", ru: "ru-RU", ar: "ar-SA", fa: "fa-IR", rw: "rw-RW" };
+  if (window.GA_TX && lg !== "tr") text = window.GA_TX(text, lg);
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = VOICE[lg] || "tr-TR"; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {}
+}
 
 // Antrenman geçmişi (bu tarayıcıda)
 function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch (e) { return []; } }
 function renderHist() {
   const h = loadHist(), ul = $("hist");
   if (!h.length) { ul.innerHTML = "<li>Henüz kayıtlı antrenman yok.</li>"; return; }
-  ul.innerHTML = h.slice(-10).reverse().map(x => `<li>${new Date(x.date).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}: ${x.made}/${x.att} isabet (%${x.att ? Math.round(x.made / x.att * 100) : 0}), ${x.min} dk${x.run ? ", en uzun isabet serisi " + x.run : ""}${x.release !== null && x.release !== undefined ? ", bırakış açısı ort. " + x.release + "°" : ""}${x.acc !== null && x.acc !== undefined ? ", takip doğruluğu %" + x.acc : ""}</li>`).join("");
+  const loc = { tr: "tr-TR", en: "en-GB", de: "de-DE", fr: "fr-FR", ru: "ru-RU", ar: "ar", fa: "fa-IR", rw: "rw-RW" }[window.GA_LANG || "tr"] || "tr-TR";
+  ul.innerHTML = h.slice(-10).reverse().map(x => `<li>${new Date(x.date).toLocaleString(loc, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ${x.made}/${x.att} isabet (%${x.att ? Math.round(x.made / x.att * 100) : 0}) · ${x.min} dk${x.release !== null ? " · bırakış açısı ort. " + x.release + "°" : ""}${x.acc !== null ? " · takip doğruluğu %" + x.acc : ""}</li>`).join("");
 }
 
 // ---------- Çizim ----------
@@ -1136,20 +738,14 @@ function drawBall() {
     drawArc(lastFit, lastFit.mx - rim.w * 4, lastFit.mx + rim.w * 4);
   }
   const b = ballHist[ballHist.length - 1];
-  ctx.lineWidth = Math.max(3, W() / 300);
   if (b && performance.now() - b.t < 200) {
-    ctx.strokeStyle = b.held ? "#F3F4F6" : "#FF8A3D";
+    ctx.strokeStyle = b.held ? "#F3F4F6" : "#FF8A3D"; ctx.lineWidth = Math.max(3, W() / 300);
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
-  } else if (predDraw) {
-    // Top o karede görülmedi: tahmini yeri kesikli çember
-    ctx.setLineDash([5, 5]); ctx.strokeStyle = "rgba(255,138,61,.8)";
-    ctx.beginPath(); ctx.arc(predDraw.x, predDraw.y, predDraw.r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
   }
 }
 function drawRim() {
   const { l, r, y, w } = rim;
-  const sure = !rimTrk || rimTrk.flat || rimTrk.conf >= 0.6;
-  ctx.strokeStyle = sure ? "#7BD88F" : "#FFD166"; ctx.lineWidth = Math.max(3, W() / 300);
+  ctx.strokeStyle = "#7BD88F"; ctx.lineWidth = Math.max(3, W() / 300);
   ctx.beginPath(); ctx.moveTo(l, y); ctx.lineTo(r, y); ctx.stroke();
   ctx.setLineDash([8, 8]); ctx.strokeStyle = "rgba(123,216,143,.45)"; ctx.lineWidth = Math.max(2, W() / 500);
   ctx.strokeRect(l - 1.5 * w, y - 3 * w, r - l + 3 * w, 2.75 * w);
@@ -1167,30 +763,26 @@ canvas.addEventListener("click", (e) => {
   const [a, c] = rimClicks, l = Math.min(a.x, c.x), r = Math.max(a.x, c.x);
   rimClicks = [];
   if (r - l < 8) { banner("Noktalar çok yakın. Önce sol, sonra sağ kenara dokun."); return; }
-  setRim({ l, r, w: r - l, y: (a.y + c.y) / 2 }, "elle");
+  rim = { l, r, w: r - l, y: (a.y + c.y) / 2 };
+  markingRim = false; shot = null;
+  $("rimInfo").textContent = "Çember işaretlendi. Şut atmaya başlayabilirsin.";
+  setStep(3);
+  banner("Hazır. Şutlar otomatik sayılacak.", 1800);
 });
-$("btnRim").onclick = () => { rimAuto = null; markingRim = true; rimClicks = []; banner("Çemberin sol kenarına dokun."); };
-$("btnRimAuto").onclick = () => rimAutoStart("istek");
+$("btnRim").onclick = () => { markingRim = true; rimClicks = []; banner("Çemberin sol kenarına dokun."); };
 $("btnCam").onclick = startCamera;
 $("file").onchange = (e) => { const f = e.target.files && e.target.files[0]; if (f) startFile(f); e.target.value = ""; };
 $("btnPlay").onclick = () => { if (video.paused) { video.play(); $("btnPlay").textContent = "Duraklat"; } else { video.pause(); $("btnPlay").textContent = "Oynat"; } };
 $("btnSlow").onclick = () => { slow = !slow; $("btnSlow").setAttribute("aria-pressed", String(slow)); video.playbackRate = slow ? 0.5 : 1; };
-$("handL").onclick = () => { setHand("left"); handVotes = []; };
-$("handR").onclick = () => { setHand("right"); handVotes = []; };
-function setHand(h) { hand = h; $("handL").setAttribute("aria-pressed", String(h === "left")); $("handR").setAttribute("aria-pressed", String(h === "right")); armVis = []; armWarned = false; handVotes = []; }
+$("handL").onclick = () => setHand("left");
+$("handR").onclick = () => setHand("right");
+function setHand(h) { hand = h; $("handL").setAttribute("aria-pressed", String(h === "left")); $("handR").setAttribute("aria-pressed", String(h === "right")); poseHist = []; smooth = { el: null, kn: null, t: 0 }; }
 $("btnColor").onclick = () => { colorAssist = !colorAssist; $("btnColor").setAttribute("aria-pressed", String(colorAssist)); };
 $("btnFull").onclick = async () => {
-  const want = !fullModel; $("btnFull").disabled = true; setStatus(want ? "Hassas vücut modeli yükleniyor…" : "Hızlı vücut modeline dönülüyor…");
-  try { const p = await makeTask(PoseLandmarker, poseOpts(want ? POSE_FULL : POSE_LITE)); if (pose) pose.close(); pose = p; fullModel = want; resetPoseFilters(); setStatus(want ? "Hassas vücut modeli açık." : "Hızlı vücut modeli açık."); }
+  const want = !fullModel; $("btnFull").disabled = true; setStatus(want ? "Hassas model yükleniyor…" : "Hızlı modele dönülüyor…");
+  try { const p = await makeTask(PoseLandmarker, poseOpts(want ? POSE_FULL : POSE_LITE)); if (pose) pose.close(); pose = p; fullModel = want; setStatus(want ? "Hassas vücut modeli açık." : "Hızlı vücut modeli açık."); }
   catch (e) { setStatus("Model değiştirilemedi; eski model kullanılmaya devam ediyor."); }
   $("btnFull").setAttribute("aria-pressed", String(fullModel)); $("btnFull").disabled = false;
-};
-$("btnBallP").onclick = async () => {
-  const want = !preciseBall; $("btnBallP").disabled = true; setStatus(want ? "Hassas top modeli yükleniyor…" : "Hızlı top modeline dönülüyor…");
-  const nb = await loadBall(want ? BALL_PRECISE : BALL_FAST);
-  if (nb) { try { if (ball) ball.close(); } catch (e) {} ball = nb; preciseBall = want; roiC.width = roiC.height = want ? 448 : 320; setStatus(want ? "Hassas top modeli açık." : "Hızlı top modeli açık."); }
-  else setStatus("Top modeli değiştirilemedi; eski model kullanılmaya devam ediyor.");
-  $("btnBallP").setAttribute("aria-pressed", String(preciseBall)); $("btnBallP").disabled = false;
 };
 $("btnVoice").onclick = () => { voiceOn = !voiceOn; $("btnVoice").setAttribute("aria-pressed", String(voiceOn)); if (voiceOn) speak("Sesli geri bildirim açık."); else try { speechSynthesis.cancel(); } catch (e) {} };
 $("btnFlip").onclick = () => { facing = facing === "environment" ? "user" : "environment"; startCamera(); };
@@ -1209,12 +801,12 @@ $("btnFs").onclick = async () => {
   } catch (e) { setStatus("Tam ekran bu tarayıcıda açılamadı."); }
 };
 document.addEventListener("fullscreenchange", () => { $("btnFs").textContent = document.fullscreenElement ? "Tam ekrandan çık" : "Tam ekran"; });
-function bestRun() { let run = 0, best = 0; for (const s of shots) { run = s.make ? run + 1 : 0; best = Math.max(best, run); } return best; }
 $("btnSave").onclick = () => {
   if (!shots.length) return;
   const st = stats();
-  const rec = { date: Date.now(), att: shots.length, made: st.made, acc: st.acc, release: st.m.releaseAngle.mean, knee: st.m.kneeMin.mean, run: bestRun(), ver: VERSION, min: sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0 };
-  try { const h = loadHist(); h.push(rec); localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-100))); setStatus(rec.att >= 20 ? "Antrenman kaydedildi. Green AI'a dönünce günün antrenmanı olarak sayılacak ve görevlerine işlenecek." : "Antrenman kaydedildi ve görevlerine işlenecek. Günün antrenmanı sayılması için en az 20 şut gerekir."); }
+  let run = 0, cur = 0; shots.forEach(x => { cur = x.make ? cur + 1 : 0; if (cur > run) run = cur; });
+  const rec = { date: Date.now(), att: shots.length, made: st.made, run, acc: st.acc, release: st.m.releaseAngle.mean, knee: st.m.kneeMin.mean, min: sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0 };
+  try { const h = loadHist(); h.push(rec); localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-100))); setStatus(rec.att >= 20 ? "Antrenman kaydedildi. Green AI'a dönünce günün antrenmanı olarak sayılacak." : "Antrenman kaydedildi. Günün antrenmanı sayılması için en az 20 şut gerekir."); }
   catch (e) { setStatus("Bu tarayıcı kaydetmeye izin vermedi."); }
   speak(`Antrenman kaydedildi. ${rec.att} atışta ${rec.made} isabet.`);
   shots.length = 0; addedMade = 0; addedMiss = 0; shot = null; goalDone = false; sessionStart = Date.now();
@@ -1240,16 +832,14 @@ function stats() {
   const m = {}; for (const k of ["kneeMin", "elbowSet", "elbowRel", "releaseAngle", "entryAngle"]) { const a = vals(k); m[k] = { mean: r0(mean(a)), sd: r0(sd(a)), n: a.length }; }
   return { made, wrong, manual, acc, m };
 }
-const handTr = (h) => h === "left" ? "sol" : (h === "right" ? "sağ" : null);
 function reportText() {
   const st = stats();
   const lines = [
-    `Green AI şut takibi (sürüm ${VERSION}): ${shots.length} atış, ${st.made} isabet` + (shots.length ? ` (%${Math.round(st.made / shots.length * 100)})` : "") + `, seçili şut eli: ${handTr(hand)}`,
+    `Green AI şut takibi (sürüm 4): ${shots.length} atış, ${st.made} isabet` + (shots.length ? ` (%${Math.round(st.made / shots.length * 100)})` : "") + `, şut eli: ${hand === "left" ? "sol" : "sağ"}`,
     `Takip doğruluğu: ${st.acc === null ? "–" : "%" + st.acc} (yanlış sayılan ${st.wrong}, hiç sayılmayan ${st.manual})`,
-    `Çember: ${rim ? rimSrc + (rimTrk && !rimTrk.flat ? `, izleme güveni %${Math.round(rimTrk.conf * 100)}, kayma ${Math.round(rimTrk.dx)},${Math.round(rimTrk.dy)} px` : "") + `, genişlik ${Math.round(rim.w)} px` : "yok"} · top rengi: ${colorProf ? "öğrenildi (ton " + Math.round(colorProf.c) + "°)" : "varsayılan turuncu"} · görüntü ${W()}×${H()}`,
     `Ortalamalar: diz ${st.m.kneeMin.mean ?? "–"}°, dirsek set ${st.m.elbowSet.mean ?? "–"}°, bırakış dirseği ${st.m.elbowRel.mean ?? "–"}°, bırakış açısı ${st.m.releaseAngle.mean ?? "–"}° (±${st.m.releaseAngle.sd ?? "–"}), giriş açısı ${st.m.entryAngle.mean ?? "–"}°`
   ];
-  shots.forEach((s, i) => lines.push(`${i + 1}. ${s.make ? "isabet" : "kaçtı"}${s.auto ? "" : " (elle eklendi)"}${s.fixed ? " (düzeltildi)" : ""}${s.method ? " [" + s.method + (s.pos !== null && s.pos !== undefined ? ", çemberin %" + s.pos + "'inden" : "") + "]" : ""}${s.hand ? " | el " + handTr(s.hand) : ""}${s.mode ? " | açılar " + s.mode : ""} | diz ${s.kneeMin ?? "–"} | dirsek set ${s.elbowSet ?? "–"} | bırakış ${s.elbowRel ?? "–"} | bırakış açısı ${s.releaseAngle ?? "–"} | giriş ${s.entryAngle ?? "–"}${s.cue ? " | ipucu: " + s.cue : ""}${s.src ? " | top kaynağı: " + s.src : ""}${s.trace ? " | iz: " + s.trace : ""}`));
+  shots.forEach((s, i) => lines.push(`${i + 1}. ${s.make ? "isabet" : "kaçtı"}${s.auto ? "" : " (elle eklendi)"}${s.fixed ? " (düzeltildi)" : ""}${s.method ? " [" + s.method + (s.pos !== null && s.pos !== undefined ? ", çemberin %" + s.pos + "'inden" : "") + "]" : ""} | diz ${s.kneeMin ?? "–"} | dirsek set ${s.elbowSet ?? "–"} | bırakış ${s.elbowRel ?? "–"} | bırakış açısı ${s.releaseAngle ?? "–"} | giriş ${s.entryAngle ?? "–"}${s.cue ? " | ipucu: " + s.cue : ""}${s.trace ? " | iz: " + s.trace : ""}`));
   return lines.join("\n");
 }
 function grade(v, [lo, hi]) { if (v === null || v === undefined) return '<span class="muted">–</span>'; return `<span class="${v >= lo && v <= hi ? "ok" : "warn"}">${v}°</span>`; }
@@ -1266,14 +856,46 @@ function render() {
     ? `Tutarlılık: bırakış açın ${ra.n >= 2 ? "±" + ra.sd + "°" : "henüz ölçülemedi"} oynuyor, diz açın ${kn.n >= 2 ? "±" + kn.sd + "°" : "henüz ölçülemedi"}. Sayı ne kadar küçükse şutun o kadar tekrarlanabilir.`
     : "";
   const tb = $("log");
-  if (!shots.length) { tb.innerHTML = '<tr><td colspan="9" class="muted">Henüz şut yok.</td></tr>'; return; }
-  tb.innerHTML = shots.map((s, i) => `<tr><td>${i + 1}</td><td class="${s.make ? "ok" : "warn"}">${s.make ? "İsabet" : "Kaçtı"}${!s.auto ? ' <span class="muted">(elle)</span>' : ""}${s.fixed ? ' <span class="muted">(düzeltildi)</span>' : ""}</td><td>${handTr(s.hand) || '<span class="muted">–</span>'}${s.mode === "3B" ? ' <span class="muted">(3B)</span>' : ""}</td><td>${grade(s.kneeMin, T.knee)}</td><td>${grade(s.elbowSet, T.elbowSet)}</td><td>${grade(s.elbowRel, T.elbowRel)}</td><td>${grade(s.releaseAngle, T.release)}</td><td>${grade(s.entryAngle, T.entry)}</td><td>${s.cue ? s.cue : '<span class="muted">–</span>'}</td></tr>`).reverse().join("");
+  if (!shots.length) { tb.innerHTML = '<tr><td colspan="8" class="muted">Henüz şut yok.</td></tr>'; return; }
+  tb.innerHTML = shots.map((s, i) => `<tr><td>${i + 1}</td><td class="${s.make ? "ok" : "warn"}">${s.make ? "İsabet" : "Kaçtı"}${!s.auto ? ' <span class="muted">(elle)</span>' : ""}${s.fixed ? ' <span class="muted">(düzeltildi)</span>' : ""}</td><td>${grade(s.kneeMin, T.knee)}</td><td>${grade(s.elbowSet, T.elbowSet)}</td><td>${grade(s.elbowRel, T.elbowRel)}</td><td>${grade(s.releaseAngle, T.release)}</td><td>${grade(s.entryAngle, T.entry)}</td><td>${s.cue ? s.cue : '<span class="muted">–</span>'}</td></tr>`).reverse().join("");
+}
+
+// ---------- Sade arayüz: ayarlar paneli, boş ekran, adımlar ----------
+function openSheet(open) {
+  $("sheet").hidden = !open; $("sheetBg").hidden = !open;
+  (open ? $("sheetClose") : $("btnSettings")).focus();
+}
+$("btnSettings").onclick = () => openSheet(true);
+$("sheetClose").onclick = () => openSheet(false);
+$("sheetBg").onclick = () => openSheet(false);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sheet").hidden) openSheet(false); });
+$("btnCam").addEventListener("click", () => openSheet(false));
+$("file").addEventListener("change", () => openSheet(false));
+$("emptyCam").onclick = () => startCamera();
+$("emptyFile").onclick = () => $("file").click();
+function setStep(n) {
+  [1, 2, 3].forEach(i => { const el = $("st" + i); el.className = i < n ? "done" : (i === n ? "on" : ""); if (i === n) el.setAttribute("aria-current", "step"); else el.removeAttribute("aria-current"); });
 }
 
 // Green AI profilinden şut elini al
 try { const app = JSON.parse(localStorage.getItem("basketballAi.v2") || "{}"); if (app.answers && (app.answers.hand === "left" || app.answers.hand === "right")) setHand(app.answers.hand); } catch (e) {}
 renderHist();
 init();
+</script>
+<script>
+// Dil: Green AI'da seçilen dil (Türkçe değilse çeviri dosyası yüklenir)
+(function () {
+  var lang = "tr";
+  try { lang = (JSON.parse(localStorage.getItem("basketballAi.v2") || "{}").lang) || "tr"; } catch (e) {}
+  window.GA_LANG = lang;
+  if (lang === "tr") return;
+  document.documentElement.lang = lang;
+  if (lang === "ar" || lang === "fa") document.documentElement.dir = "rtl";
+  function load(src, done) { var s = document.createElement("script"); s.src = src; s.onload = done; document.head.appendChild(s); }
+  function go() { if (window.GA_DOM) window.GA_DOM(lang); }
+  if (lang === "en") load("lang-en.js?v=8", go);
+  else load("lang-keys.js?v=8", function () { load("lang-" + lang + ".js?v=8", go); });
+})();
 </script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>
 </body>
