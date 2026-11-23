@@ -1,5 +1,7 @@
-const VERSION = "greenai-v6";
-const SHELL = ["./", "./index.html", "./takip.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
+// Green AI arka plan dosyası: uygulamayı internetsiz açar, takip modellerini ilk indirmeden sonra saklar.
+// Yeni sürüm yayınlarken VERSION'ı değiştir; eski önbellek silinir.
+const VERSION = "greenai-v8";
+const SHELL = ["./", "./index.html", "./takip.html", "./app-core.js?v=8", "./app-main.js?v=8", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 const MODEL_HOSTS = ["cdn.jsdelivr.net", "storage.googleapis.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
 self.addEventListener("install", (e) => {
@@ -18,6 +20,8 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+
+  // Takip modelleri ve yazı tipleri: önce önbellek (büyük dosyalar bir kez iner)
   if (MODEL_HOSTS.includes(url.hostname)) {
     e.respondWith(
       caches.open("greenai-models").then(async (c) => {
@@ -30,7 +34,10 @@ self.addEventListener("fetch", (e) => {
     );
     return;
   }
+
   if (url.origin !== self.location.origin) return;
+
+  // Uygulama sayfaları: önce ağ (güncellemeler gelsin), ağ yoksa önbellek
   e.respondWith(
     fetch(req)
       .then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })
