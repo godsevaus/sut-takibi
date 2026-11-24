@@ -148,7 +148,7 @@ function clanRefresh(comp, withMsgs) {
     return c.rpc('clan_info', { p_week: weekStr() }).then(function (r) {
       if (r.error) { throw r.error; }
       var info = r.data || null;
-      var patch = { clan: info, clanLoaded: true };
+      var patch = { clan: info, clanLoaded: true, clanNetErr: false };
       if (!info) { patch.clanMsgs = []; clanUnsub(comp); comp.clanBusy = false; comp.setState(patch); return; }
       clanSub(comp, c);
       if (!withMsgs) { comp.clanBusy = false; comp.setState(patch); return; }
