@@ -294,7 +294,7 @@ html, body { background: #0F1115; }
 <sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
 <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column">
 
-<div style="padding: 20px 104px 0 20px; display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center">
+<div style="padding: 20px 104px 0 20px; display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; flex-shrink: 0">
 <span style="font-size: 14px; color: #B4B9C4">{{ a.headSmall }}</span>
 <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.2">{{ a.headBig }}</span>
 </div>
@@ -334,6 +334,7 @@ html, body { background: #0F1115; }
 </sc-for>
 </div>
 <p style="margin: 0; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ streakNote }}</p>
+<sc-if value="{{ goalMet }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; padding: 8px 12px; border-radius: 12px; background: #1E2A20; font-size: 14px; line-height: 1.4; color: #7BD88F">{{ goalMetText }}</p></sc-if>
 <sc-if value="{{ restNote }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 13px; line-height: 1.4; color: #C9CFF5">{{ restNote }}</p></sc-if>
 </section>
 
@@ -421,6 +422,7 @@ html, body { background: #0F1115; }
 </sc-for>
 </div>
 <button type="button" aria-disabled="{{ doneAttr }}" onClick="{{ completeToday }}" style="height: 52px; border: none; border-radius: 14px; background: #0F1115; color: #F3F4F6; font-size: 17px; font-weight: 600">{{ todayButton }}</button>
+<sc-if value="{{ canUndo }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ undoDone }}" style="min-height: 40px; border: none; background: transparent; color: #0F1115; font-size: 14px; font-weight: 600; text-decoration: underline">{{ undoLbl }}</button></sc-if>
 </section>
 
 <section aria-label="{{ a.challengeTitle }}" style="padding: 16px; border-radius: 18px; border: 2px solid {{accent}}; display: flex; flex-direction: column; gap: 10px">
@@ -468,6 +470,38 @@ html, body { background: #0F1115; }
 <span aria-live="polite" style="font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ partnerNote }}</span>
 </section>
 
+<section aria-label="{{ p.title }}" style="padding: 16px; border-radius: 22px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 13px; font-weight: 600; color: {{accent}}">{{ p.title }}</span>
+<span role="timer" aria-live="off" style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums">{{ p.clock }}</span>
+</div>
+<div style="display: flex; gap: 8px; flex-shrink: 0">
+<sc-if value="{{ p.notRunning }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ woStart }}" style="height: 48px; padding: 0 16px; border: none; border-radius: 14px; background: {{accent}}; color: #0F1115; font-size: 16px; font-weight: 700">{{ p.startLbl }}</button></sc-if>
+<sc-if value="{{ p.running }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ woPause }}" style="height: 48px; padding: 0 16px; border: none; border-radius: 14px; background: #F3F4F6; color: #0F1115; font-size: 16px; font-weight: 700">{{ p.pauseLbl }}</button></sc-if>
+<sc-if value="{{ p.hasTime }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ woReset }}" style="height: 48px; padding: 0 12px; border: 2px solid #3A3F4B; border-radius: 14px; background: transparent; color: #F3F4F6; font-size: 14px; font-weight: 600">{{ p.resetLbl }}</button></sc-if>
+</div>
+</div>
+<span style="font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ p.sub }}</span>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid #262A33">
+<span style="font-size: 14px; font-weight: 600">{{ p.restTitle }}</span>
+<sc-if value="{{ p.restIdle }}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{ p.rests }}" as="rt" hint-placeholder-count="3">
+<button type="button" aria-label="{{ rt.aria }}" onClick="{{ rt.pick }}" style="height: 44px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600">{{ rt.label }}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ p.restActive }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 14px; background: #23263A">
+<span role="timer" style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 30px; color: #C9CFF5; font-variant-numeric: tabular-nums">{{ p.restClock }}</span>
+<button type="button" onClick="{{ restCancelFn }}" style="height: 40px; padding: 0 14px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 14px; font-weight: 600">{{ p.restCancel }}</button>
+</div>
+</sc-if>
+<sc-if value="{{ p.restDone }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 15px; font-weight: 600; color: #7BD88F">{{ p.restDoneText }}</p></sc-if>
+</div>
+</section>
+
 <section aria-label="{{ a.todayTitle }}" style="padding: 18px; border-radius: 22px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
 <div style="display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 13px; font-weight: 600; color: {{accent}}">{{ a.todayTitle }}</span>
@@ -495,6 +529,7 @@ html, body { background: #0F1115; }
 </sc-for>
 <div style="padding: 10px 12px; border-radius: 12px; border: 1px dashed #3A3F4B; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ a.cooldown }}</div>
 <button type="button" aria-disabled="{{ doneAttr }}" onClick="{{ completeToday }}" style="height: 52px; border: none; border-radius: 14px; background: {{ doneBg }}; color: {{ doneFg }}; font-size: 17px; font-weight: 600">{{ todayButton }}</button>
+<sc-if value="{{ canUndo }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ undoDone }}" style="min-height: 40px; border: none; background: transparent; color: #B4B9C4; font-size: 14px; font-weight: 600; text-decoration: underline">{{ undoLbl }}</button></sc-if>
 <span style="font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ a.safety }}</span>
 </section>
 
@@ -535,10 +570,13 @@ html, body { background: #0F1115; }
 <span aria-live="polite" style="font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ ftNote }}</span>
 </section>
 
-<section aria-label="{{ a.videoTitle }}" style="padding: 16px; border-radius: 18px; border: 2px dashed #3A3F4B; display: flex; flex-direction: column; gap: 4px">
+<a href="takip.html" style="padding: 16px; border-radius: 18px; border: 2px dashed #3A3F4B; color: #F3F4F6; text-decoration: none; display: flex; align-items: center; gap: 12px">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 16px; font-weight: 600">{{ a.videoTitle }}</span>
 <span style="font-size: 14px; line-height: 1.4; color: #B4B9C4">{{ a.videoSub }}</span>
-</section>
+</span>
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M7.5 4l6 6-6 6"></path></svg>
+</a>
 
 </div>
 </sc-if>
@@ -546,7 +584,7 @@ html, body { background: #0F1115; }
 <sc-if value="{{ tabRank }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 16px">
 
-<div role="group" aria-label="{{ a.scopeLabel }}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 5px; border-radius: 16px; background: #1A1D24">
+<div role="group" aria-label="{{ a.scopeLabel }}" style="display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; padding: 5px; border-radius: 16px; background: #1A1D24">
 <sc-for list="{{ scopes }}" as="sc" hint-placeholder-count="3">
 <button type="button" aria-pressed="{{ sc.pressed }}" onClick="{{ sc.pick }}" style="height: 44px; border: none; border-radius: 12px; background: {{ sc.bg }}; color: {{ sc.fg }}; font-size: 15px; font-weight: 600">{{ sc.label }}</button>
 </sc-for>
@@ -622,6 +660,12 @@ html, body { background: #0F1115; }
 </sc-if>
 
 <sc-if value="{{ c2.loading }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; font-size: 15px; color: #B4B9C4">{{ c2.loadingText }}</p></sc-if>
+<sc-if value="{{ c2.netErr }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-radius: 18px; background: #2A1A18; border: 1px solid #FF9B8A; display: flex; flex-direction: column; gap: 10px">
+<p role="alert" style="margin: 0; font-size: 15px; line-height: 1.4; color: #F3F4F6">{{ c2.netErrText }}</p>
+<button type="button" onClick="{{ clanRetry }}" style="height: 44px; border: none; border-radius: 12px; background: #F3F4F6; color: #0F1115; font-size: 15px; font-weight: 600">{{ c2.retryLbl }}</button>
+</div>
+</sc-if>
 
 <sc-if value="{{ c2.none }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 14px">
@@ -751,6 +795,19 @@ html, body { background: #0F1115; }
 </div>
 </sc-for>
 </div>
+
+<section aria-label="{{ recTitle }}" style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">{{ recTitle }}</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{ records }}" as="rc" hint-placeholder-count="4">
+<div style="padding: 10px 12px; border-radius: 14px; background: #262A33; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; color: #B4B9C4">{{ rc.label }}</span>
+<span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 22px; line-height: 1.15; color: {{accent}}">{{ rc.value }}</span>
+<span style="font-size: 12px; color: #B4B9C4">{{ rc.note }}</span>
+</div>
+</sc-for>
+</div>
+</section>
 
 <div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
 <span style="font-size: 14px; font-weight: 600">{{ a.chartTitle }}</span>
@@ -910,9 +967,10 @@ html, body { background: #0F1115; }
 
 </div>
 </template>
-<script src="app-core.js?v=9"></script>
-<script src="app-extra.js?v=9"></script>
-<script src="app-main.js?v=9"></script>
+<script src="app-core.js?v=10"></script>
+<script src="app-extra.js?v=10"></script>
+<script src="app-plus.js?v=10"></script>
+<script src="app-main.js?v=10"></script>
 
 <div id="install" role="dialog" aria-labelledby="install-t" style="display:none; position:fixed; left:12px; right:12px; bottom:92px; z-index:50; max-width:496px; margin:0 auto; padding:14px 16px; border-radius:16px; background:#1A1D24; border:1px solid #3A3F4B; color:#F3F4F6; font-family:Inter, system-ui, sans-serif; flex-direction:column; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.45)">
   <strong id="install-t" style="font-size:16px"></strong>
