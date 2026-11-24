@@ -28,7 +28,7 @@ function __tx(str) {
   var t = D[kv[0]];
   if (t === undefined) {
     // Parçalara böl (" · " ve ": ") ve her parçayı ayrı çevir
-    var bits = core.split(/( · |: )/);
+    var bits = core.split(/( · |: |, )/);
     if (bits.length > 1) { return lead + bits.map(function (b, i) { return i % 2 ? b : __tx(b); }).join('') + trail; }
     var sent = core.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g);
     if (sent && sent.length > 1) { return lead + sent.map(function (x) { return __tx(x.trim()); }).join(' ') + trail; }
@@ -52,7 +52,8 @@ function __txLang(lang) {
       sc.onerror = function () { __TXLoading = false; };
       document.head.appendChild(sc);
     };
-    var langFile = function () { load('lang-' + lang + '.js?v=8', function () { __TXLoading = false; __schedule(); }); };
+    var extra = function () { load('lang2-' + lang + '.js?v=9', function () { __TXLoading = false; __schedule(); }); };
+    var langFile = function () { load('lang-' + lang + '.js?v=8', function () { __schedule(); if (window.GA_SET2) { extra(); } else { load('lang2-keys.js?v=9', extra); } }); };
     if (window.GA_SET) { langFile(); } else { load('lang-keys.js?v=8', langFile); }
   }
 }
@@ -66,15 +67,16 @@ function __look(scope, expr) {
 const __interp = (str, scope) => str.replace(__HOLE, (m, e) => { const v = __look(scope, e); return v == null ? '' : String(v); });
 const __interpT = (str, scope) => str.replace(__HOLE, (m, e) => { const v = __look(scope, e); return v == null ? '' : __tx(String(v)); });
 const __whole = (str) => { const m = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/.exec(str || ''); return m ? m[1] : null; };
-function __build(src, scope, parent) {
+// data-notx: içindeki metin çevrilmez (oyuncu mesajları, takma adlar, klan adı)
+function __build(src, scope, parent, notx) {
   for (const n of src.childNodes) {
-    if (n.nodeType === 3) { parent.appendChild(document.createTextNode(__interpT(n.nodeValue, scope))); continue; }
+    if (n.nodeType === 3) { parent.appendChild(document.createTextNode((notx ? __interp : __interpT)(n.nodeValue, scope))); continue; }
     if (n.nodeType !== 1) continue;
     const tag = n.localName;
-    if (tag === 'sc-if') { const e = __whole(n.getAttribute('value')); if (e && __look(scope, e)) __build(n, scope, parent); continue; }
+    if (tag === 'sc-if') { const e = __whole(n.getAttribute('value')); if (e && __look(scope, e)) __build(n, scope, parent, notx); continue; }
     if (tag === 'sc-for') {
       const e = __whole(n.getAttribute('list')), list = (e && __look(scope, e)) || [], as = n.getAttribute('as') || 'item';
-      list.forEach((it, i) => { const sc = Object.create(scope); sc[as] = it; sc.$index = i; __build(n, sc, parent); });
+      list.forEach((it, i) => { const sc = Object.create(scope); sc[as] = it; sc.$index = i; __build(n, sc, parent, notx); });
       continue;
     }
     const el = n.cloneNode(false);
@@ -91,7 +93,7 @@ function __build(src, scope, parent) {
       if (name === 'value' && (tag === 'input' || tag === 'textarea')) { el.__value = __interp(a.value, scope); el.setAttribute('value', el.__value); continue; }
       if (a.value.indexOf('{{') >= 0) el.setAttribute(name, (name === 'aria-label' || name === 'placeholder' || name === 'title') ? __interpT(a.value, scope) : __interp(a.value, scope));
     }
-    __build(n, scope, el);
+    __build(n, scope, el, notx || n.hasAttribute('data-notx'));
     parent.appendChild(el);
   }
 }
@@ -127,7 +129,7 @@ function __render() {
 
 
 var STORE_KEY = 'basketballAi.v2';
-var KEEP = ['authed', 'email', 'answers', 'height', 'weight', 'lang', 'onboarded', 'planMode', 'day', 'doneToday', 'challenge', 'added', 'ft', 'streak', 'lastDone', 'week', 'wk', 'totalWorkouts', 'totalChallenges', 'totalPoints', 'reminder', 'partner', 'sessionsSeen', 'shotAtt', 'shotMade', 'verifiedToday', 'q', 'totalQuests', 'totalQM', 'serverNick'];
+var KEEP = ['authed', 'email', 'answers', 'height', 'weight', 'lang', 'onboarded', 'planMode', 'day', 'doneToday', 'challenge', 'added', 'ft', 'streak', 'lastDone', 'week', 'wk', 'totalWorkouts', 'totalChallenges', 'totalPoints', 'reminder', 'partner', 'sessionsSeen', 'shotAtt', 'shotMade', 'verifiedToday', 'q', 'totalQuests', 'totalQM', 'serverNick', 'covered', 'restUsed', 'restDays', 'hist', 'ftHist', 'remHour', 'clanSeen'];
 
 function dayStr(d) {
   var m = d.getMonth() + 1, dd = d.getDate();
@@ -611,11 +613,48 @@ function dayRoll(st) {
   if (st.day !== todayStr()) { st.day = todayStr(); st.doneToday = false; st.challenge = 0; st.added = {}; st.verifiedToday = false; }
   if (st.week !== weekStr() || !st.wk || !st.wk.byDay) { st.week = weekStr(); st.wk = emptyWeek(); }
 }
-// Seri kontrolü: son antrenman bugün ya da dün değilse seri biter. Şut takibinden gelen geçmiş günler işlendikten SONRA çalışır.
-function streakCheck(st) {
-  if (st.lastDone !== todayStr() && st.lastDone !== yesterdayStr()) { st.streak = 0; }
-}
 function prevDayStr(ds) { var p = String(ds).split('-').map(Number); return dayStr(new Date(p[0], p[1] - 1, p[2] - 1)); }
+function nextDayStr(ds) { var p = String(ds).split('-').map(Number); return dayStr(new Date(p[0], p[1] - 1, p[2] + 1)); }
+function weekOfDay(ds) { var p = String(ds).split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2]); return dayStr(new Date(p[0], p[1] - 1, p[2] - ((d.getDay() + 6) % 7))); }
+// Dinlenme hakkı: haftada (7 - seçilen gün sayısı), en az 1 gün. Planındaki dinlenme günü seriyi bozmaz.
+function restAllowed(st) { var f = parseInt((st.answers || {}).freq, 10); return Math.max(1, 7 - (f || 6)); }
+function restLeft(st, wk) { return Math.max(0, restAllowed(st) - ((st.restUsed || {})[wk || weekStr()] || 0)); }
+// Son antrenmanla hedef gün arasındaki boş günleri dinlenme hakkıyla kapatır. Hak yetmezse seri biter.
+function bridge(st, target) {
+  var base = (st.covered && st.covered > (st.lastDone || '')) ? st.covered : st.lastDone;
+  if (!base || !st.streak) { return false; }
+  if (base >= prevDayStr(target)) { return true; }
+  st.restUsed = Object.assign({}, st.restUsed); st.restDays = Object.assign({}, st.restDays);
+  var d = nextDayStr(base), n = 0;
+  while (d < target) {
+    var wk = weekOfDay(d);
+    if (++n > 14 || (st.restUsed[wk] || 0) >= restAllowed(st)) { st.streak = 0; return false; }
+    st.restUsed[wk] = (st.restUsed[wk] || 0) + 1; st.restDays[d] = 1; st.covered = d;
+    d = nextDayStr(d);
+  }
+  return true;
+}
+// Bir günü antrenman yapılmış say ve seriyi ilerlet. Yeni seri değerini döndürür.
+function streakAdvance(st, day) {
+  if (st.restDays && st.restDays[day]) {
+    st.restDays = Object.assign({}, st.restDays); delete st.restDays[day];
+    st.restUsed = Object.assign({}, st.restUsed); var wk = weekOfDay(day); st.restUsed[wk] = Math.max(0, (st.restUsed[wk] || 0) - 1);
+  }
+  var ok = bridge(st, day);
+  st.streak = (ok && st.streak > 0) ? st.streak + 1 : 1;
+  st.lastDone = day;
+  if (!st.covered || st.covered < day) { st.covered = day; }
+  return st.streak;
+}
+// Seri kontrolü: dünden önceki boş günler dinlenme hakkıyla kapatılır; hak biterse seri biter.
+// Şut takibinden gelen geçmiş günler işlendikten SONRA çalışır.
+function streakCheck(st) {
+  if (st.streak > 0) { bridge(st, todayStr()); }
+  var cut = dayStr(new Date(Date.now() - 40 * 86400000));
+  ['restUsed', 'restDays'].forEach(function (k) { var o = st[k]; if (!o) { return; } Object.keys(o).forEach(function (x) { if (x < cut) { delete o[x]; } }); });
+  if (st.hist) { Object.keys(st.hist).forEach(function (x) { if (x < dayStr(new Date(Date.now() - 120 * 86400000))) { delete st.hist[x]; } }); }
+}
+function histAdd(st, day, mins) { st.hist = Object.assign({}, st.hist); st.hist[day] = (st.hist[day] || 0) + Math.max(0, mins || 0); }
 // Şut takibi ekranında kaydedilen antrenmanları işle (aynı sitede, aynı tarayıcı deposu)
 function applySessions(st) {
   var n = 0;
@@ -636,7 +675,7 @@ function applySessions(st) {
       // Kayıt geç saatte yapılıp uygulama ertesi gün açılsa da o gün sayılır, seri bozulmaz.
       var sday = dayStr(d);
       if ((x.att || 0) >= 20 && (!st.lastDone || sday > st.lastDone)) {
-        var ns = (st.lastDone === prevDayStr(sday)) ? (st.streak || 0) + 1 : 1;
+        var ns = streakAdvance(st, sday);
         var bonus = (ns % 7 === 0) ? 70 : 0;
         var mins = Math.max(1, x.min || 0);
         if (dayStr(mon) === st.week) {
@@ -645,11 +684,11 @@ function applySessions(st) {
           st.wk = w;
         }
         if (sday === todayStr()) { st.doneToday = true; st.verifiedToday = true; }
-        st.streak = ns; st.lastDone = sday;
         st.totalWorkouts = (st.totalWorkouts || 0) + 1; st.totalPoints = (st.totalPoints || 0) + 30 + bonus;
         qWorkout(st, mins, x.date, st.partner, ns, 30 + bonus);
         asWorkout = true;
       }
+      if (x.min) { histAdd(st, sday, x.min); }
       qSession(st, x, asWorkout);
       seen = Math.max(seen, x.date);
     });
