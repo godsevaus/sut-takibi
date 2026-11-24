@@ -27,7 +27,16 @@ function __tx(str) {
   if (D[core] !== undefined) { return lead + D[core] + trail; }
   var t = D[kv[0]];
   if (t === undefined) {
-    // Parçalara böl (" · " ve ": ") ve her parçayı ayrı çevir
+    // Sondaki nokta yüzünden bulunamadıysa noktasız dene
+    var pm = core.match(/^(.*[^.!?])([.!?])$/);
+    if (pm && (D[pm[1]] !== undefined || D[__txKey(pm[1])[0]] !== undefined)) { return lead + __tx(pm[1]) + pm[2] + trail; }
+    // Birden çok cümle varsa önce cümle cümle çevir; hepsi çevrildiyse onu kullan
+    var sents = core.match(/[^.!?]+[.!?]+(?=\s|$)\s*|[^.!?]+$/g);
+    if (sents && sents.length > 1) {
+      var tr = sents.map(function (x) { return [x.trim(), __tx(x.trim())]; });
+      if (tr.every(function (p) { return p[0] !== p[1] || !/[A-Za-z]{3}/.test(p[0]); })) { return lead + tr.map(function (p) { return p[1]; }).join(' ') + trail; }
+    }
+    // Parçalara böl (" · ", ": " ve ", ") ve her parçayı ayrı çevir
     var bits = core.split(/( · |: |, )/);
     if (bits.length > 1) { return lead + bits.map(function (b, i) { return i % 2 ? b : __tx(b); }).join('') + trail; }
     var sent = core.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g);
@@ -52,7 +61,9 @@ function __txLang(lang) {
       sc.onerror = function () { __TXLoading = false; };
       document.head.appendChild(sc);
     };
-    var extra = function () { load('lang2-' + lang + '.js?v=9', function () { __TXLoading = false; __schedule(); }); };
+    var done3 = function () { if (window.GA_SET3) { window.GA_SET3(lang); } __TXLoading = false; __schedule(); };
+    var extra3 = function () { if (window.GA_SET3) { done3(); } else { load('lang3.js?v=10', done3); } };
+    var extra = function () { load('lang2-' + lang + '.js?v=9', function () { __schedule(); extra3(); }); };
     var langFile = function () { load('lang-' + lang + '.js?v=8', function () { __schedule(); if (window.GA_SET2) { extra(); } else { load('lang2-keys.js?v=9', extra); } }); };
     if (window.GA_SET) { langFile(); } else { load('lang-keys.js?v=8', langFile); }
   }
@@ -129,7 +140,7 @@ function __render() {
 
 
 var STORE_KEY = 'basketballAi.v2';
-var KEEP = ['authed', 'email', 'answers', 'height', 'weight', 'lang', 'onboarded', 'planMode', 'day', 'doneToday', 'challenge', 'added', 'ft', 'streak', 'lastDone', 'week', 'wk', 'totalWorkouts', 'totalChallenges', 'totalPoints', 'reminder', 'partner', 'sessionsSeen', 'shotAtt', 'shotMade', 'verifiedToday', 'q', 'totalQuests', 'totalQM', 'serverNick', 'covered', 'restUsed', 'restDays', 'hist', 'ftHist', 'remHour', 'clanSeen'];
+var KEEP = ['authed', 'email', 'answers', 'height', 'weight', 'lang', 'onboarded', 'planMode', 'day', 'doneToday', 'challenge', 'added', 'ft', 'streak', 'lastDone', 'week', 'wk', 'totalWorkouts', 'totalChallenges', 'totalPoints', 'reminder', 'partner', 'sessionsSeen', 'shotAtt', 'shotMade', 'verifiedToday', 'q', 'totalQuests', 'totalQM', 'serverNick', 'covered', 'restUsed', 'restDays', 'hist', 'ftHist', 'remHour', 'clanSeen', 'undo', 'woStart', 'woAcc', 'woDay', 'bestStreak'];
 
 function dayStr(d) {
   var m = d.getMonth() + 1, dd = d.getDate();
