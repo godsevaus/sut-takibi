@@ -472,7 +472,7 @@ class Component extends DCLogic {
       var wList = (WCOMPS[posKey] && WCOMPS[posKey][styleKey]) || WCOMPS.any[styleKey] || ['Caitlin Clark'];
       compName = (ans.hand === 'left' && wList.length > 1) ? wList[1] : wList[0];
     }
-    __TXE = [typeof ans.nick === 'string' ? ans.nick : '', compName, compNba, s.email, s.emailDraft].concat(((s.lb && s.lb.rows) || []).map(function (r) { return r.nickname; })).concat(Object.keys(STYLES).map(function (k) { return STYLES[k].en; }), ['Point guard', 'Shooting guard', 'Small forward', 'Power forward', 'Center']);
+    __TXE = [typeof ans.nick === 'string' ? ans.nick : '', compName, compNba, s.email, s.emailDraft].concat(((s.lb && s.lb.rows) || []).map(function (r) { return r.nickname; }), ((s.clan && s.clan.members) || []).map(function (m) { return m.nickname; })).concat(Object.keys(STYLES).map(function (k) { return STYLES[k].en; }), ['Point guard', 'Shooting guard', 'Small forward', 'Power forward', 'Center']);
     var compBoth = girl ? compName + ' (WNBA) · ' + compNba + ' (NBA)' : compName;
     var finisher = SHOOT_STYLES.indexOf(styleKey) >= 0 ? 'ftfatigue' : 'seventeen';
     var planIds = resolve(PLANS[styleKey] || PLANS.scorer).concat(youngAge ? [] : [finisher]);
@@ -949,15 +949,17 @@ class Component extends DCLogic {
       out.doneFg = s.doneToday ? '#F3F4F6' : '#0F1115';
       out.completeToday = function () {
         if (s.doneToday) { return; }
+        var undo = typeof undoSnap === 'function' ? undoSnap(s) : null;
+        var mins = typeof woMinutes === 'function' ? woMinutes(s, duration) : duration;
         var sk = { streak: s.streak, lastDone: s.lastDone, covered: s.covered, restUsed: s.restUsed, restDays: s.restDays, answers: ans, hist: s.hist };
         var newStreak = streakAdvance(sk, todayStr());
-        histAdd(sk, todayStr(), duration);
+        histAdd(sk, todayStr(), mins);
         var bonus = (newStreak % 7 === 0) ? 70 : 0;
         var w2 = Object.assign({}, wk, { byDay: wk.byDay.slice() });
-        w2.workouts += 1; w2.minutes += duration; w2.ptsW += 20; w2.ptsS += 10 + bonus; w2.byDay[todayIndex] += duration;
+        w2.workouts += 1; w2.minutes += mins; w2.ptsW += 20; w2.ptsS += 10 + bonus; w2.byDay[todayIndex] += mins;
         var q2 = qClone(s.q);
-        qWorkout({ q: q2 }, duration, Date.now(), s.partner, newStreak, 30 + bonus);
-        self.setState({ doneToday: true, streak: newStreak, lastDone: sk.lastDone, covered: sk.covered, restUsed: sk.restUsed, restDays: sk.restDays, hist: sk.hist, wk: w2, totalWorkouts: s.totalWorkouts + 1, totalPoints: s.totalPoints + 30 + bonus, q: q2 });
+        qWorkout({ q: q2 }, mins, Date.now(), s.partner, newStreak, 30 + bonus);
+        self.setState({ doneToday: true, streak: newStreak, lastDone: sk.lastDone, covered: sk.covered, restUsed: sk.restUsed, restDays: sk.restDays, hist: sk.hist, wk: w2, totalWorkouts: s.totalWorkouts + 1, totalPoints: s.totalPoints + 30 + bonus, q: q2, undo: undo, woStart: 0, woAcc: 0, bestStreak: Math.max(s.bestStreak || 0, newStreak) });
       };
 
       var chName = ({
@@ -1100,7 +1102,7 @@ class Component extends DCLogic {
       var maxMin = Math.max(30, Math.max.apply(null, wk.byDay));
       out.bars = dayNames.map(function (label, i) {
         var m = wk.byDay[i];
-        return { label: DAYINIT[lang] ? DAYINIT[lang][i] : label.charAt(0), height: Math.max(4, Math.round(m / maxMin * 70)) + 'px', color: m > 0 ? accent : '#4A5060' };
+        return { label: DAYINIT[lang] ? DAYINIT[lang][i] : label, height: Math.max(4, Math.round(m / maxMin * 70)) + 'px', color: m > 0 ? accent : '#4A5060' };
       });
       // Son 8 hafta: çalışma dakikası ve şut isabeti; serbest atış testleri
       var lp = longProgress(s, lang);
@@ -1288,6 +1290,9 @@ class Component extends DCLogic {
           promote: function () { clanCall(self, 'clan_set_role', { p_uid: m.uid, p_role: m.role === 'admin' ? 'member' : 'admin' }, L); }
         };
       });
+
+      // Ek paket 3 (app-plus.js): sayaç, mola, geri al, rekorlar, haftalık hedef
+      if (typeof gaPlus === 'function') { gaPlus(self, s, out, { L: L, en: en, lang: lang, accent: accent, tab: tab, duration: duration, freq: freq }); }
 
       out.editProfile = function () { self.setState({ screen: 1, langOpen: false }); };
       out.resetAll = function () {
