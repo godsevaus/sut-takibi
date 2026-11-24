@@ -1,7 +1,7 @@
 // Green AI arka plan dosyası: uygulamayı internetsiz açar, takip modellerini ilk indirmeden sonra saklar.
 // Yeni sürüm yayınlarken VERSION'ı değiştir; eski önbellek silinir.
-const VERSION = "greenai-v8";
-const SHELL = ["./", "./index.html", "./takip.html", "./app-core.js?v=8", "./app-main.js?v=8", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
+const VERSION = "greenai-v9";
+const SHELL = ["./", "./index.html", "./takip.html", "./app-core.js?v=9", "./app-extra.js?v=9", "./app-main.js?v=9", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 const MODEL_HOSTS = ["cdn.jsdelivr.net", "storage.googleapis.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
 self.addEventListener("install", (e) => {
@@ -43,4 +43,21 @@ self.addEventListener("fetch", (e) => {
       .then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })
       .catch(() => caches.match(req).then((hit) => hit || caches.match("./index.html")))
   );
+});
+
+// Günlük hatırlatma bildirimi
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "Green AI", {
+    body: d.body || "", icon: "./icon-192.png", badge: "./icon-192.png", tag: "greenai-daily", data: { url: d.url || "./" }
+  }));
+});
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+    for (const c of list) { if (c.url.startsWith(self.registration.scope) && "focus" in c) return c.focus(); }
+    return self.clients.openWindow(url);
+  }));
 });

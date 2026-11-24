@@ -325,12 +325,16 @@ html, body { background: #0F1115; }
 <sc-if value="{{ d.done }}" hint-placeholder-val="{{ false }}">
 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.500 8.500 6.500 11.500 12.500 4.500"></path></svg>
 </sc-if>
+<sc-if value="{{ d.rest }}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7B8BD8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 9.5A5 5 0 0 1 6.500 3.500a5 5 0 1 0 6 6z"></path></svg>
+</sc-if>
 </div>
 <span style="font-size: 12px; color: {{ d.labelColor }}">{{ d.label }}</span>
 </div>
 </sc-for>
 </div>
 <p style="margin: 0; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ streakNote }}</p>
+<sc-if value="{{ restNote }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 13px; line-height: 1.4; color: #C9CFF5">{{ restNote }}</p></sc-if>
 </section>
 
 <section aria-label="{{ a.questTitle }}" style="padding: 16px; border-radius: 22px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
@@ -472,15 +476,21 @@ html, body { background: #0F1115; }
 </div>
 <div style="padding: 10px 12px; border-radius: 12px; border: 1px dashed #3A3F4B; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ a.warmup }}</div>
 <sc-for list="{{ todayDrills }}" as="dr" hint-placeholder-count="4">
-<div style="padding: 12px 14px; border-radius: 14px; background: #262A33; display: flex; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 600">
+<div style="border-radius: 14px; background: #262A33; display: flex; flex-direction: column">
+<button type="button" aria-expanded="{{ dr.expanded }}" onClick="{{ dr.toggleHow }}" style="min-height: 48px; padding: 12px 14px; border: none; background: transparent; color: #F3F4F6; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 15px; font-weight: 600">
 <span>{{ dr.name }}</span>
-<span style="flex-shrink: 0; color: #B4B9C4; font-weight: 500">{{ dr.amount }}</span>
+<span style="flex-shrink: 0; display: flex; align-items: center; gap: 8px; color: #B4B9C4; font-weight: 500">{{ dr.amount }}<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5l4 4 4-4"></path></svg></span>
+</button>
+<sc-if value="{{ dr.open }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 0 14px 12px; font-size: 14px; line-height: 1.45; color: #D7DAE0"><strong style="color: {{accent}}">{{ dr.howLabel }}</strong> {{ dr.how }}</p></sc-if>
 </div>
 </sc-for>
 <sc-for list="{{ addedDrills }}" as="dr" hint-placeholder-count="0">
-<div style="padding: 12px 14px; border-radius: 14px; border: 2px solid {{accent}}; display: flex; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 600">
+<div style="border-radius: 14px; border: 2px solid {{accent}}; display: flex; flex-direction: column">
+<button type="button" aria-expanded="{{ dr.expanded }}" onClick="{{ dr.toggleHow }}" style="min-height: 48px; padding: 12px 14px; border: none; background: transparent; color: #F3F4F6; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 15px; font-weight: 600">
 <span>{{ dr.name }}</span>
 <span style="flex-shrink: 0; color: #B4B9C4; font-weight: 500">{{ dr.amount }}</span>
+</button>
+<sc-if value="{{ dr.open }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 0 14px 12px; font-size: 14px; line-height: 1.45; color: #D7DAE0"><strong style="color: {{accent}}">{{ dr.howLabel }}</strong> {{ dr.how }}</p></sc-if>
 </div>
 </sc-for>
 <div style="padding: 10px 12px; border-radius: 12px; border: 1px dashed #3A3F4B; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ a.cooldown }}</div>
@@ -499,12 +509,15 @@ html, body { background: #0F1115; }
 </sc-for>
 </div>
 <sc-for list="{{ libItems }}" as="ex" hint-placeholder-count="6">
-<div style="padding: 12px 14px; border-radius: 16px; background: #1A1D24; display: flex; align-items: center; gap: 12px">
-<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 12px 14px; border-radius: 16px; background: #1A1D24; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" aria-expanded="{{ ex.expanded }}" onClick="{{ ex.toggleHow }}" style="flex-grow: 1; min-width: 0; min-height: 44px; padding: 0; border: none; background: transparent; color: #F3F4F6; text-align: left; display: flex; flex-direction: column; gap: 2px; justify-content: center">
 <span style="font-size: 16px; font-weight: 600">{{ ex.name }}</span>
-<span style="font-size: 13px; color: #B4B9C4">{{ ex.amount }}</span>
-</div>
+<span style="font-size: 13px; color: #B4B9C4">{{ ex.amount }} · {{ ex.howLabel }}</span>
+</button>
 <button type="button" aria-pressed="{{ ex.pressed }}" onClick="{{ ex.toggle }}" style="height: 44px; min-width: 84px; padding: 0 12px; flex-shrink: 0; border-radius: 12px; border: 2px solid {{ ex.border }}; background: {{ ex.bg }}; color: {{ ex.fg }}; font-size: 15px; font-weight: 600">{{ ex.button }}</button>
+</div>
+<sc-if value="{{ ex.open }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 14px; line-height: 1.45; color: #D7DAE0">{{ ex.how }}</p></sc-if>
 </div>
 </sc-for>
 </section>
@@ -597,6 +610,127 @@ html, body { background: #0F1115; }
 </div>
 </sc-if>
 
+<sc-if value="{{ tabClan }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 14px">
+
+<sc-if value="{{ c2.needLink }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 17px; font-weight: 600">{{ c2.linkTitle }}</span>
+<span style="font-size: 14px; line-height: 1.45; color: #B4B9C4">{{ c2.linkBody }}</span>
+<button type="button" onClick="{{ lbLink }}" style="height: 48px; border: none; border-radius: 14px; background: {{accent}}; color: #0F1115; font-size: 16px; font-weight: 600">{{ a.linkButton }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ c2.loading }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; font-size: 15px; color: #B4B9C4">{{ c2.loadingText }}</p></sc-if>
+
+<sc-if value="{{ c2.none }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 19px">{{ c2.joinTitle }}</h2>
+<span style="font-size: 14px; line-height: 1.4; color: #B4B9C4">{{ c2.joinBody }}</span>
+<label for="clan-code" style="font-size: 14px; font-weight: 600">{{ c2.codeLabel }}</label>
+<input id="clan-code" dir="ltr" type="text" autocomplete="off" autocapitalize="characters" maxlength="6" placeholder="ABC123" value="{{ clanCodeDraft }}" onChange="{{ onClanCode }}" style="height: 50px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #3A3F4B; background: #0F1115; color: #F3F4F6; font-family: inherit; font-size: 16px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; letter-spacing: 6px; text-align: center">
+<button type="button" onClick="{{ clanJoin }}" style="height: 48px; border: none; border-radius: 14px; background: {{accent}}; color: #0F1115; font-size: 16px; font-weight: 600">{{ c2.joinBtn }}</button>
+</div>
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 19px">{{ c2.createTitle }}</h2>
+<span style="font-size: 14px; line-height: 1.4; color: #B4B9C4">{{ c2.createBody }}</span>
+<label for="clan-name" style="font-size: 14px; font-weight: 600">{{ c2.nameLabel }}</label>
+<input id="clan-name" type="text" autocomplete="off" maxlength="24" value="{{ clanNameDraft }}" onChange="{{ onClanName }}" style="height: 50px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #3A3F4B; background: #0F1115; color: #F3F4F6; font-family: inherit; font-size: 16px">
+<button type="button" onClick="{{ clanCreate }}" style="height: 48px; border: none; border-radius: 14px; background: {{accent}}; color: #0F1115; font-size: 16px; font-weight: 600">{{ c2.createBtn }}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ c2.inClan }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="padding: 14px 16px; border-radius: 18px; background: #1A1D24; display: flex; align-items: center; gap: 12px">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span data-notx style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ c2.name }}</span>
+<span style="font-size: 13px; color: #B4B9C4">{{ c2.meta }}<span data-notx dir="ltr" style="font-weight: 700; color: #F3F4F6; letter-spacing: 2px">{{ c2.code }}</span></span>
+</div>
+<button type="button" onClick="{{ clanShare }}" style="height: 44px; padding: 0 12px; flex-shrink: 0; border: none; border-radius: 12px; background: #F3F4F6; color: #0F1115; font-size: 14px; font-weight: 600">{{ c2.shareBtn }}</button>
+</div>
+<div role="group" aria-label="{{ c2.name }}" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 5px; border-radius: 16px; background: #1A1D24">
+<sc-for list="{{ c2.tabs }}" as="ct" hint-placeholder-count="2">
+<button type="button" aria-pressed="{{ ct.pressed }}" onClick="{{ ct.pick }}" style="height: 44px; border: none; border-radius: 12px; background: {{ ct.bg }}; color: {{ ct.fg }}; font-size: 15px; font-weight: 600">{{ ct.label }}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{ c2.viewChat }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{ c2.announceOn }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 10px 12px; border-radius: 12px; background: #23263A; font-size: 14px; line-height: 1.4; color: #C9CFF5">{{ c2.announceBanner }}</p></sc-if>
+<div id="chatlist" aria-live="polite" style="max-height: 46vh; min-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px">
+<sc-if value="{{ c2.hasMsgs }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ clanMsgs }}" as="m" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; align-items: {{ m.align }}; gap: 4px">
+<button type="button" aria-label="{{ m.aria }}" aria-expanded="{{ m.sel }}" onClick="{{ m.pick }}" style="max-width: 84%; padding: 8px 12px; border-radius: 14px; border: 1px solid {{ m.bd }}; background: {{ m.bg }}; color: #F3F4F6; text-align: left; display: flex; flex-direction: column; gap: 3px">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #B4B9C4"><span data-notx style="font-weight: 700; color: #F3F4F6">{{ m.nick }}</span><sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 6px; border-radius: 6px; background: #3A3F4B; color: #FFD0A8; font-size: 11px">{{ m.badge }}</span></sc-if><span data-notx>{{ m.time }}</span></span>
+<span data-notx dir="auto" style="font-size: 15px; line-height: 1.4; white-space: pre-wrap; word-break: break-word">{{ m.body }}</span>
+</button>
+<sc-if value="{{ m.sel }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 6px">
+<sc-if value="{{ m.canReport }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ m.report }}" style="height: 36px; padding: 0 10px; border: 1px solid #FF9B8A; border-radius: 10px; background: transparent; color: #FF9B8A; font-size: 13px; font-weight: 600">{{ c2.reportLbl }}</button></sc-if>
+<sc-if value="{{ m.canDelete }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ m.del }}" style="height: 36px; padding: 0 10px; border: 1px solid #3A3F4B; border-radius: 10px; background: transparent; color: #F3F4F6; font-size: 13px; font-weight: 600">{{ c2.deleteLbl }}</button></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</sc-if>
+</div>
+<sc-if value="{{ c2.noMsgs }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 14px; color: #B4B9C4">{{ c2.empty }}</p></sc-if>
+<sc-if value="{{ c2.canWrite }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; align-items: flex-end">
+<label for="chat-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{ c2.writeLabel }}</label>
+<textarea id="chat-input" rows="2" maxlength="300" placeholder="{{ c2.placeholder }}" value="{{ chatDraft }}" onChange="{{ onChat }}" style="flex-grow: 1; min-height: 48px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 2px solid #3A3F4B; background: #0F1115; color: #F3F4F6; font-family: inherit; font-size: 16px; resize: none"></textarea>
+<button type="button" onClick="{{ clanSend }}" style="height: 48px; padding: 0 16px; flex-shrink: 0; border: none; border-radius: 12px; background: {{accent}}; color: #0F1115; font-size: 15px; font-weight: 600">{{ c2.sendBtn }}</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ c2.viewMembers }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 18px">{{ c2.rankTitle }}</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{ clanMembers }}" as="mb" hint-placeholder-count="3">
+<li style="padding: 12px 14px; border-radius: 16px; background: {{ mb.bg }}; border: 2px solid {{ mb.bd }}; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 28px; flex-shrink: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 18px; color: {{accent}}">{{ mb.rank }}</span>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600"><span data-notx style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ mb.nick }}</span><sc-if value="{{ mb.meTag }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; font-weight: 500; color: #B4B9C4">{{ mb.meTag }}</span></sc-if><sc-if value="{{ mb.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 6px; border-radius: 6px; background: #3A3F4B; color: #FFD0A8; font-size: 11px; flex-shrink: 0">{{ mb.badge }}</span></sc-if></span>
+<span style="font-size: 13px; color: #B4B9C4">{{ mb.streak }}</span>
+</div>
+<span style="font-size: 16px; font-weight: 700; flex-shrink: 0">{{ mb.points }}</span>
+</div>
+<sc-if value="{{ mb.hasActions }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 6px">
+<sc-if value="{{ mb.canPromote }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ mb.promote }}" style="height: 36px; padding: 0 10px; border: 1px solid #3A3F4B; border-radius: 10px; background: transparent; color: #F3F4F6; font-size: 13px; font-weight: 600">{{ mb.promoteLbl }}</button></sc-if>
+<sc-if value="{{ mb.canKick }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ mb.kick }}" style="height: 36px; padding: 0 10px; border: 1px solid #FF9B8A; border-radius: 10px; background: transparent; color: #FF9B8A; font-size: 13px; font-weight: 600">{{ mb.kickLbl }}</button></sc-if>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+<sc-if value="{{ c2.isAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 15px; font-weight: 600">{{ c2.settingsTitle }}</span>
+<button type="button" aria-pressed="{{ c2.announcePressed }}" onClick="{{ clanToggleAnnounce }}" style="min-height: 52px; padding: 8px 14px; border-radius: 14px; border: 2px solid #3A3F4B; background: transparent; color: #F3F4F6; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; font-size: 15px; font-weight: 600"><span>{{ c2.announceLabel }}</span><span style="flex-shrink: 0; color: {{accent}}">{{ c2.announceState }}</span></button>
+</div>
+</sc-if>
+<button type="button" onClick="{{ clanLeave }}" style="height: 44px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600; border-color: #FF9B8A; color: #FF9B8A">{{ c2.leaveBtn }}</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ c2.err }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 14px; line-height: 1.4; color: #FF9B8A">{{ c2.err }}</p></sc-if>
+<sc-if value="{{ c2.reported }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; font-size: 14px; line-height: 1.4; color: #7BD88F">{{ c2.reported }}</p></sc-if>
+<p style="margin: 0; padding: 12px 14px; border-radius: 12px; border: 1px dashed #3A3F4B; font-size: 13px; line-height: 1.45; color: #B4B9C4">{{ c2.safety }}</p>
+
+</div>
+</sc-if>
+
 <sc-if value="{{ tabStats }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 16px">
 
@@ -630,6 +764,48 @@ html, body { background: #0F1115; }
 </div>
 </div>
 
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">{{ longTitle }}</span>
+<div role="img" aria-label="{{ longAria }}" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; align-items: end; height: 112px">
+<sc-for list="{{ longBars }}" as="b" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 112px">
+<span style="font-size: 10px; color: #B4B9C4">{{ b.val }}</span>
+<div style="width: 100%; height: {{ b.height }}; border-radius: 5px; background: {{ b.color }}"></div>
+<span style="font-size: 10px; color: #B4B9C4; white-space: nowrap">{{ b.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ pctShow }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">{{ pctTitle }}</span>
+<div role="img" aria-label="{{ pctTitle }}" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; align-items: end; height: 112px">
+<sc-for list="{{ pctBars }}" as="b" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 112px">
+<span style="font-size: 10px; color: #B4B9C4">{{ b.val }}</span>
+<div style="width: 100%; height: {{ b.height }}; border-radius: 5px; background: {{ b.color }}"></div>
+<span style="font-size: 10px; color: #B4B9C4; white-space: nowrap">{{ b.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ ftShow }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-radius: 18px; background: #1A1D24; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">{{ ftTitle }}</span>
+<div role="img" aria-label="{{ ftTitle }}" style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; align-items: end; height: 112px">
+<sc-for list="{{ ftBars }}" as="b" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 112px">
+<span style="font-size: 10px; color: #B4B9C4">{{ b.val }}</span>
+<div style="width: 100%; height: {{ b.height }}; border-radius: 5px; background: {{ b.color }}"></div>
+<span style="font-size: 10px; color: #B4B9C4; white-space: nowrap">{{ b.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<p style="margin: 0; font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ longNote }}</p>
+
 </div>
 </sc-if>
 
@@ -638,10 +814,22 @@ html, body { background: #0F1115; }
 
 <div style="padding: 18px; border-radius: 22px; background: #1A1D24; display: flex; flex-direction: column; gap: 4px">
 <span style="font-size: 13px; color: #B4B9C4">{{ a.nickLabel }}</span>
-<span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15">{{ nickShown }}</span>
+<span data-notx style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15">{{ nickShown }}</span>
 <span style="font-size: 14px; color: #B4B9C4">{{ a.profileLine }}</span>
 <span style="font-size: 14px; color: #B4B9C4">{{ compLine }}</span>
+<sc-if value="{{ nickEditing }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px">
+<label for="nick-edit" style="font-size: 14px; font-weight: 600">{{ nickEditLabels.label }}</label>
+<input id="nick-edit" type="text" autocomplete="off" value="{{ nickDraft }}" onChange="{{ onNickDraft }}" style="height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #3A3F4B; background: #0F1115; color: #F3F4F6; font-family: inherit; font-size: 16px">
+<sc-if value="{{ nickDraftProblem }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 14px; color: #FF9B8A">{{ nickDraftProblem }}</p></sc-if>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button type="button" onClick="{{ nickEditSave }}" style="height: 44px; border: none; border-radius: 12px; background: {{accent}}; color: #0F1115; font-size: 15px; font-weight: 600">{{ nickEditLabels.save }}</button>
+<button type="button" onClick="{{ nickEditCancel }}" style="height: 44px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600">{{ nickEditLabels.cancel }}</button>
 </div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ nickNotEditing }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ nickEditOpen }}" style="width: 100%; height: 44px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600">{{ nickEditLabels.open }}</button></sc-if>
 
 <section aria-label="{{ a.badgeTitle }}" style="display: flex; flex-direction: column; gap: 10px">
 <h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 19px">{{ a.badgeTitle }}</h2>
@@ -668,13 +856,24 @@ html, body { background: #0F1115; }
 <span>{{ a.reminder }}</span>
 <span style="flex-shrink: 0; color: {{accent}}">{{ reminderState }}</span>
 </button>
+<sc-if value="{{ remOn }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="{{ remHourLabel }}" style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 14px; font-weight: 600">{{ remHourLabel }}</span>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: #1A1D24">
+<sc-for list="{{ remHours }}" as="rh" hint-placeholder-count="6">
+<button type="button" aria-pressed="{{ rh.pressed }}" onClick="{{ rh.pick }}" style="height: 40px; border: none; border-radius: 10px; background: {{ rh.bg }}; color: {{ rh.fg }}; font-size: 13px; font-weight: 600">{{ rh.label }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ remNote }}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; font-size: 14px; line-height: 1.4; color: #F3F4F6">{{ remNote }}</p></sc-if>
 <span style="font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ saveNote }}</span>
 
 <sc-if value="{{ linked }}" hint-placeholder-val="{{ true }}">
 <div style="padding: 14px 16px; border-radius: 16px; background: #1A1D24; display: flex; justify-content: space-between; align-items: center; gap: 12px">
 <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px">
 <span style="font-size: 13px; color: #B4B9C4">{{ a.accountLabel }}</span>
-<span style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ emailShown }}</span>
+<span data-notx dir="ltr" style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ emailShown }}</span>
 </span>
 <button type="button" onClick="{{ logout }}" style="height: 44px; padding: 0 14px; flex-shrink: 0; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600">{{ a.logout }}</button>
 </div>
@@ -696,11 +895,12 @@ html, body { background: #0F1115; }
 
 </div>
 
-<nav aria-label="{{ a.navLabel }}" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 6px 18px; background: #14161B; border-top: 1px solid #262A33">
-<sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
-<button type="button" aria-current="{{ tb.current }}" onClick="{{ tb.pick }}" style="height: 52px; border: none; background: transparent; color: {{ tb.color }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600">
+<nav aria-label="{{ a.navLabel }}" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 4px 18px; background: #14161B; border-top: 1px solid #262A33">
+<sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="6">
+<button type="button" aria-current="{{ tb.current }}" aria-label="{{ tb.aria }}" onClick="{{ tb.pick }}" style="position: relative; height: 52px; padding: 0 2px; border: none; background: transparent; color: {{ tb.color }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; overflow: hidden">
 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ tb.icon }}"></path></svg>
-<span>{{ tb.label }}</span>
+<span style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ tb.label }}</span>
+<sc-if value="{{ tb.dot }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: 6px; right: 18%; width: 9px; height: 9px; border-radius: 5px; background: {{accent}}"></span></sc-if>
 </button>
 </sc-for>
 </nav>
@@ -710,8 +910,9 @@ html, body { background: #0F1115; }
 
 </div>
 </template>
-<script src="app-core.js?v=8"></script>
-<script src="app-main.js?v=8"></script>
+<script src="app-core.js?v=9"></script>
+<script src="app-extra.js?v=9"></script>
+<script src="app-main.js?v=9"></script>
 
 <div id="install" role="dialog" aria-labelledby="install-t" style="display:none; position:fixed; left:12px; right:12px; bottom:92px; z-index:50; max-width:496px; margin:0 auto; padding:14px 16px; border-radius:16px; background:#1A1D24; border:1px solid #3A3F4B; color:#F3F4F6; font-family:Inter, system-ui, sans-serif; flex-direction:column; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.45)">
   <strong id="install-t" style="font-size:16px"></strong>
