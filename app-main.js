@@ -27,6 +27,15 @@ class Component extends DCLogic {
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { self.tick(); } });
     window.addEventListener('pageshow', function (e) { if (e.persisted) { self.tick(); } });
     window.addEventListener('storage', function (e) { if (e.key === 'greenai.sessions') { self.tick(); } });
+    // Klan: sohbet açıkken 8 sn'de bir, değilse 40 sn'de bir yeni mesaj kontrolü (anlık bildirim de ayrıca dinlenir)
+    this.clanN = 0;
+    this.clanTimer = setInterval(function () {
+      var st = self.state;
+      if (!st.authed || st.sbOk !== true || !st.onboarded || document.visibilityState === 'hidden') { return; }
+      self.clanN++;
+      var chat = st.tab === 'clan' && st.clanView !== 'members';
+      if (chat || self.clanN % 5 === 0) { clanRefresh(self, st.tab === 'clan'); }
+    }, 8000);
   }
 
   tick() {
@@ -52,6 +61,11 @@ class Component extends DCLogic {
   }
 
   componentDidUpdate() {
+    if (this.scrollChat) {
+      this.scrollChat = false;
+      var cl = document.getElementById('chatlist');
+      if (cl) { cl.scrollTop = cl.scrollHeight; }
+    }
     if (!this.storeOk) { return; }
     try {
       var out = {};
@@ -68,6 +82,7 @@ class Component extends DCLogic {
     sb().then(function (c) { return c.auth.getSession(); }).then(function (r) {
       var ok = !!(r && r.data && r.data.session);
       self.setState({ sbOk: ok });
+      if (ok) { clanRefresh(self, false); }
     }).catch(function () {});
   }
 
@@ -109,6 +124,10 @@ class Component extends DCLogic {
         var now = new Date().toISOString();
         prof.updated_at = now; prog.updated_at = now; row.updated_at = now;
         return c.from('profiles').upsert(prof).then(function (r1) {
+          if (r1.error && r1.error.code === '23514') {
+            prof.nickname = 'Oyuncu' + Math.floor(1000 + Math.random() * 9000);
+            return c.from('profiles').upsert(prof);
+          }
           if (r1.error && r1.error.code === '23505') {
             prof.nickname = cleanNick(base).slice(0, 12) + Math.floor(1000 + Math.random() * 9000);
             return c.from('profiles').upsert(prof);
@@ -148,7 +167,7 @@ class Component extends DCLogic {
             self.setState(st);
           }
           self.lastSig = null;
-          return self.pushNow();
+          return self.pushNow().then(function () { clanRefresh(self, false); });
         });
       });
     }).catch(function (e) { console.warn('Green AI restore', e); });
@@ -432,7 +451,10 @@ class Component extends DCLogic {
     function drill(id) {
       var d = LIB[id];
       var needsPartner = PARTNER_ONLY.indexOf(id) >= 0;
-      return { id: id, cat: d[0], name: en ? d[2] : d[1], amount: (en ? d[4] : d[3]) + (needsPartner ? L(' · partner gerekir', ' · needs a partner') : '') };
+      var open = s.openDrill === id;
+      return { id: id, cat: d[0], name: en ? d[2] : d[1], amount: (en ? d[4] : d[3]) + (needsPartner ? L(' · partner gerekir', ' · needs a partner') : ''),
+        how: drillHow(id, en), open: open, expanded: open ? 'true' : 'false', howLabel: L('Nasıl yapılır?', 'How to do it?'),
+        toggleHow: function () { self.setState({ openDrill: open ? null : id }); } };
     }
     function resolve(ids) { return ids.map(function (id) { return (!s.partner && SOLO_ALT[id]) ? SOLO_ALT[id] : id; }); }
     var youngAge = parseInt(ans.age, 10) <= 12;
@@ -584,7 +606,8 @@ class Component extends DCLogic {
     out.logout = function () {
       sb().then(function (c) { return c.auth.signOut(); }).catch(function () {});
       self.lastSig = null;
-      self.setState({ authed: false, authStep: 'email', emailDraft: s.email, codeDraft: '', demoCode: '', authErr: '', authInfo: '', langOpen: false, sbOk: false, lb: null });
+      clanUnsub(self);
+      self.setState({ authed: false, authStep: 'email', emailDraft: s.email, codeDraft: '', demoCode: '', authErr: '', authInfo: '', langOpen: false, sbOk: false, lb: null, clan: null, clanMsgs: [], clanLoaded: false });
     };
 
     if (isStep) {
@@ -665,8 +688,9 @@ class Component extends DCLogic {
           var v = (e && e.target && typeof e.target.value === 'string') ? e.target.value : '';
           setNick(v.replace(/\s+/g, '').slice(0, 16));
         };
-        ready = nickNow.length >= 3;
-        out.reaction = ready ? L(nickNow + ', güzel isim. Sıralamada böyle görüneceksin.', nickNow + ', good one. This is how you will appear on the leaderboard.') : '';
+        var nickBad = nickNow.length >= 3 ? nickProblem(nickNow, L) : '';
+        ready = nickNow.length >= 3 && !nickBad;
+        out.reaction = nickBad || (ready ? L(nickNow + ', güzel isim. Sıralamada böyle görüneceksin.', nickNow + ', good one. This is how you will appear on the leaderboard.') : '');
       }
 
       out.hasReaction = out.reaction !== '';
@@ -739,7 +763,7 @@ class Component extends DCLogic {
 
       var a = {
         headSmall: tab === 'home' ? (nick ? L('Hoş geldin, ' + nick, 'Welcome, ' + nick) : L('Hoş geldin', 'Welcome')) : 'Green AI',
-        headBig: tab === 'home' ? profileLine : ({ train: L('Antrenman', 'Training'), rank: L('Sıralama', 'Leaderboard'), stats: L('İstatistik', 'Stats'), profile: L('Profil', 'Profile') })[tab],
+        headBig: tab === 'home' ? profileLine : ({ train: L('Antrenman', 'Training'), rank: L('Sıralama', 'Leaderboard'), clan: L('Klan', 'Clan'), stats: L('İstatistik', 'Stats'), profile: L('Profil', 'Profile') })[tab],
         profileLine: profileLine,
         streakLabel: L('günlük seri', 'day streak'), weekGoal: L('Haftalık hedef', 'Weekly goal'),
         pointsWeek: L('puan · bu hafta', 'points · this week'),
@@ -801,17 +825,21 @@ class Component extends DCLogic {
         ? L('Bire bir, ayna drili ve temaslı bitiriş gibi partner drilleri plana girdi.', 'Partner drills such as one-on-one, the mirror drill and contact finishing are now in your plan.')
         : L('Partner gerektiren driller tek kişilik karşılıklarıyla değiştirildi. Arkadaşın gelirse "Partnerle"yi seç.', 'Drills that need a partner are swapped for solo versions. Pick "With a partner" when a friend joins.');
       out.nickShown = nickShown;
-      out.tabHome = tab === 'home'; out.tabTrain = tab === 'train'; out.tabRank = tab === 'rank'; out.tabStats = tab === 'stats'; out.tabProfile = tab === 'profile';
+      out.tabHome = tab === 'home'; out.tabTrain = tab === 'train'; out.tabRank = tab === 'rank'; out.tabStats = tab === 'stats'; out.tabProfile = tab === 'profile'; out.tabClan = tab === 'clan';
 
       out.tabs = [
         { id: 'home', label: L('Ana sayfa', 'Home'), icon: 'M3 10 11 3l8 7v9h-5v-6H8v6H3z' },
         { id: 'train', label: L('Antrenman', 'Training'), icon: 'M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM3 11h16M11 3v16' },
         { id: 'rank', label: L('Sıralama', 'Ranking'), icon: 'M7 3h8v6a4 4 0 0 1-8 0zM7 5H3c0 3 1.5 5 4 5M15 5h4c0 3-1.5 5-4 5M11 13v4M7 19h8' },
+        { id: 'clan', label: L('Klan', 'Clan'), icon: 'M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM15 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 18c.8-3.5 3-5 5-5s4.2 1.5 5 5M10 18c.8-3.5 3-5 5-5s4.2 1.5 5 5' },
         { id: 'stats', label: L('İstatistik', 'Stats'), icon: 'M4 18V11M9 18V5M14 18v-9M19 18v-5' },
         { id: 'profile', label: L('Profil', 'Profile'), icon: 'M11 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM3.5 19c1.5-4 13.5-4 15 0' }
       ].map(function (x) {
         var on = tab === x.id;
-        return Object.assign({}, x, { current: on ? 'page' : 'false', color: on ? accent : '#B4B9C4', pick: function () { self.setState({ tab: x.id, langOpen: false }); } });
+        var dot = x.id === 'clan' && !on && !!(s.clan && s.clan.last > (s.clanSeen || 0));
+        return Object.assign({}, x, { current: on ? 'page' : 'false', color: on ? accent : '#B4B9C4', dot: dot,
+          aria: x.label + (dot ? L(', yeni mesaj var', ', new messages') : ''),
+          pick: function () { var p = { tab: x.id, langOpen: false }; if (x.id === 'clan') { self.scrollChat = true; setTimeout(function () { clanRefresh(self, true); }, 0); } self.setState(p); } });
       });
       out.goRank = function () { self.setState({ tab: 'rank' }); };
       out.goTrain = function () { self.setState({ tab: 'train' }); };
@@ -875,22 +903,30 @@ class Component extends DCLogic {
 
       out.streakCount = String(s.streak);
       out.weekGoalValue = freq ? (wk.workouts + ' / ' + freq + ' ' + t.days) : L('Belirlenmedi', 'Not set');
+      var monD = new Date(); monD.setDate(monD.getDate() - todayIndex);
       out.week = dayNames.map(function (label, i) {
         var isToday = i === todayIndex;
         var done = wk.byDay[i] > 0;
+        var dd = new Date(monD.getFullYear(), monD.getMonth(), monD.getDate() + i);
+        var rest = !done && !!(s.restDays && s.restDays[dayStr(dd)]);
         return {
-          label: label, done: done,
+          label: label, done: done, rest: rest,
           bg: done ? accent : 'transparent',
-          border: done ? accent : (isToday ? '#F3F4F6' : '#3A3F4B'),
+          border: done ? accent : (rest ? '#7B8BD8' : (isToday ? '#F3F4F6' : '#3A3F4B')),
           labelColor: isToday ? '#F3F4F6' : '#B4B9C4',
-          aria: label + ', ' + (done ? L('tamamlandı', 'completed') : (isToday ? L('bugün', 'today') : L('boş', 'open')))
+          aria: label + ', ' + (done ? L('tamamlandı', 'completed') : (rest ? L('dinlenme günü', 'rest day') : (isToday ? L('bugün', 'today') : L('boş', 'open'))))
         };
       });
-      out.streakNote = s.doneToday
+      var rLeft = restLeft(s);
+      var restLine = rLeft > 0
+        ? L(' Bu hafta ' + rLeft + ' dinlenme hakkın var: o günlerde ara verirsen serin bozulmaz.', ' You have ' + rLeft + ' rest days left this week: taking a break on those days keeps your streak.')
+        : L(' Bu haftaki dinlenme hakların bitti.', ' You have used your rest days for this week.');
+      out.streakNote = (s.doneToday
         ? L('Bugün tamam. Yarın da gel, serin ' + (s.streak + 1) + ' olsun.', 'Done for today. Come back tomorrow to make it ' + (s.streak + 1) + '.')
         : (s.streak > 0
           ? L('Serin ' + s.streak + ' gün. Bugünkü antrenmanı bitir, seriyi koru.', 'Your streak is ' + s.streak + ' days. Finish today to keep it alive.')
-          : L('Serin bugün başlıyor. İlk antrenmanını bitir, ilk günü işaretle.', 'Your streak starts today. Finish your first workout to mark day one.'));
+          : L('Serin bugün başlıyor. İlk antrenmanını bitir, ilk günü işaretle.', 'Your streak starts today. Finish your first workout to mark day one.')));
+      out.restNote = s.streak > 0 ? restLine.trim() : '';
 
       out.styleLabel = styleLabel;
       out.styleIcon = styleObj.icon;
@@ -913,13 +949,15 @@ class Component extends DCLogic {
       out.doneFg = s.doneToday ? '#F3F4F6' : '#0F1115';
       out.completeToday = function () {
         if (s.doneToday) { return; }
-        var newStreak = (s.lastDone === yesterdayStr()) ? s.streak + 1 : 1;
+        var sk = { streak: s.streak, lastDone: s.lastDone, covered: s.covered, restUsed: s.restUsed, restDays: s.restDays, answers: ans, hist: s.hist };
+        var newStreak = streakAdvance(sk, todayStr());
+        histAdd(sk, todayStr(), duration);
         var bonus = (newStreak % 7 === 0) ? 70 : 0;
         var w2 = Object.assign({}, wk, { byDay: wk.byDay.slice() });
         w2.workouts += 1; w2.minutes += duration; w2.ptsW += 20; w2.ptsS += 10 + bonus; w2.byDay[todayIndex] += duration;
         var q2 = qClone(s.q);
         qWorkout({ q: q2 }, duration, Date.now(), s.partner, newStreak, 30 + bonus);
-        self.setState({ doneToday: true, streak: newStreak, lastDone: todayStr(), wk: w2, totalWorkouts: s.totalWorkouts + 1, totalPoints: s.totalPoints + 30 + bonus, q: q2 });
+        self.setState({ doneToday: true, streak: newStreak, lastDone: sk.lastDone, covered: sk.covered, restUsed: sk.restUsed, restDays: sk.restDays, hist: sk.hist, wk: w2, totalWorkouts: s.totalWorkouts + 1, totalPoints: s.totalPoints + 30 + bonus, q: q2 });
       };
 
       var chName = ({
@@ -975,7 +1013,7 @@ class Component extends DCLogic {
       });
 
       out.ftOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) {
-        return Object.assign({ label: String(n) }, look(s.ft === n), { pick: function () { var q6 = qClone(s.q), t6 = { q: q6 }; qMark(t6, 'ft', todayStr()); qBump(t6, 'ftBest', n, null, 'max'); self.setState({ ft: n, q: q6 }); } });
+        return Object.assign({ label: String(n) }, look(s.ft === n), { pick: function () { var q6 = qClone(s.q), t6 = { q: q6 }; qMark(t6, 'ft', todayStr()); qBump(t6, 'ftBest', n, null, 'max'); var fh = (s.ftHist || []).filter(function (x) { return x.d !== todayStr(); }).concat([{ d: todayStr(), n: n }]).slice(-12); self.setState({ ft: n, q: q6, ftHist: fh }); } });
       });
       var ftPct = s.ft === null ? '' : (en ? (s.ft * 10) + '%' : '%' + (s.ft * 10));
       out.ftNote = s.ft === null
@@ -985,8 +1023,10 @@ class Component extends DCLogic {
       var lbG = (ans.gender === 'female' || ans.gender === 'male') ? ans.gender : null;
       var gWord = lbG === 'female' ? L(' kızlar', ' girls') : (lbG === 'male' ? L(' erkekler', ' boys') : L(' grubu', ' group'));
       var groupName = (ans.league && ans.league !== 'none') ? ans.league + gWord : (lbG ? (lbG === 'female' ? L('Kızlar', 'Girls') : L('Erkekler', 'Boys')) : L('Grubum', 'My group'));
-      var scope = s.scope === 'group' ? 'group' : 'all';
-      out.scopes = [{ id: 'group', label: groupName }, { id: 'all', label: L('Herkes', 'Everyone') }].map(function (x) {
+      var scope = s.scope === 'group' ? 'group' : ((s.scope === 'clan' && s.clan) ? 'clan' : 'all');
+      var scopeDefs = [{ id: 'group', label: groupName }, { id: 'all', label: L('Herkes', 'Everyone') }];
+      if (s.clan) { scopeDefs.push({ id: 'clan', label: L('Klanım', 'My clan') }); }
+      out.scopes = scopeDefs.map(function (x) {
         var sel = scope === x.id;
         return { label: x.label, pressed: sel ? 'true' : 'false', bg: sel ? '#F3F4F6' : 'transparent', fg: sel ? '#0F1115' : '#F3F4F6', pick: function () { self.setState({ scope: x.id }); } };
       });
@@ -1002,13 +1042,18 @@ class Component extends DCLogic {
       var lgName = sbLeague(ans);
       var lbKey = scope + '|' + (lgName || '') + '|' + (lbG || '') + '|' + weekStr();
       var lb = s.lb;
-      if (tab === 'rank' && s.authed && s.sbOk !== false && (!lb || lb.key !== lbKey || Date.now() - lb.at > 60000) && !self.lbBusy) {
+      if (tab === 'rank' && scope !== 'clan' && s.authed && s.sbOk !== false && (!lb || lb.key !== lbKey || Date.now() - lb.at > 60000) && !self.lbBusy) {
         setTimeout(function () { self.loadLb(lbKey, scope, lgName, lbG); }, 0);
       }
-      var live = !!(lb && lb.key === lbKey && !lb.err);
+      var live = scope !== 'clan' && !!(lb && lb.key === lbKey && !lb.err);
       var meRow = function (rk) { return { rank: rk, name: nickShown, sub: s.streak + ' ' + a.streakLabel, points: String(points), bg: '#2A2016', bd: a0accent }; };
       var a0accent = '#FF8A3D';
-      if (live) {
+      if (scope === 'clan') {
+        out.rows = (s.clan.members || []).map(function (m, i) {
+          return { rank: String(i + 1), name: m.nickname + (m.me ? L(' (sen)', ' (you)') : ''), sub: (m.streak || 0) + ' ' + a.streakLabel, points: String(m.points), bg: m.me ? '#2A2016' : '#1A1D24', bd: m.me ? a0accent : '#262A33' };
+        });
+        out.emptyText = L('Klanındaki arkadaşlarınla bu haftaki puanlar. Kodu paylaşıp daha fazla arkadaş çağırabilirsin.', 'This week\'s points with the friends in your clan. Share the code to bring more friends.');
+      } else if (live) {
         out.rows = lb.rows.map(function (r) {
           return { rank: String(r.rank), name: r.nickname + (r.is_me ? L(' (sen)', ' (you)') : ''), sub: (r.streak || 0) + ' ' + a.streakLabel, points: String(r.points), bg: r.is_me ? '#2A2016' : '#1A1D24', bd: r.is_me ? a0accent : '#262A33' };
         });
@@ -1034,6 +1079,7 @@ class Component extends DCLogic {
         { label: L('Günlük antrenmanı bitir', 'Finish the daily workout'), value: '+20' },
         { label: L('Seriyi bir gün uzat', 'Extend your streak by a day'), value: '+10' },
         { label: L('Her 7 günlük seride bonus', 'Bonus for every 7-day streak'), value: '+70' },
+        { label: L('Dinlenme günü (seriyi bozmaz)', 'Rest day (keeps your streak)'), value: L('haftada ' + restAllowed(s), restAllowed(s) + ' a week') },
         { label: L('Günün meydan okuması', 'Daily challenge'), value: '+50' },
         { label: L('Günlük görev', 'Daily mission'), value: '+' + QREW.d },
         { label: L('Haftalık görev', 'Weekly mission'), value: '+' + QREW.w },
@@ -1056,6 +1102,22 @@ class Component extends DCLogic {
         var m = wk.byDay[i];
         return { label: DAYINIT[lang] ? DAYINIT[lang][i] : label.charAt(0), height: Math.max(4, Math.round(m / maxMin * 70)) + 'px', color: m > 0 ? accent : '#4A5060' };
       });
+      // Son 8 hafta: çalışma dakikası ve şut isabeti; serbest atış testleri
+      var lp = longProgress(s, lang);
+      lp[lp.length - 1].mins = Math.max(lp[lp.length - 1].mins, wk.minutes || 0);
+      var maxW = Math.max(60, Math.max.apply(null, lp.map(function (x) { return x.mins; })));
+      out.longTitle = L('Son 8 hafta: çalışma süresi', 'Last 8 weeks: training time');
+      out.longAria = L('Son 8 haftanın her biri için toplam çalışma dakikası', 'Total training minutes for each of the last 8 weeks');
+      out.longBars = lp.map(function (x) { return { label: x.label, val: x.mins ? String(x.mins) : '', height: Math.max(4, Math.round(x.mins / maxW * 70)) + 'px', color: x.mins > 0 ? accent : '#4A5060' }; });
+      var hasPct = lp.some(function (x) { return x.pct !== null; });
+      out.pctShow = hasPct;
+      out.pctTitle = L('Haftalık şut isabeti (kamerayla)', 'Weekly shooting accuracy (camera)');
+      out.pctBars = lp.map(function (x) { return { label: x.label, val: x.pct === null ? '' : (en ? x.pct + '%' : '%' + x.pct), height: x.pct === null ? '4px' : Math.max(4, Math.round(x.pct / 100 * 70)) + 'px', color: x.pct === null ? '#4A5060' : '#7BD88F' }; });
+      var fh = (s.ftHist || []).slice(-8);
+      out.ftShow = fh.length > 0;
+      out.ftTitle = L('Serbest atış testlerin (10 atışta)', 'Your free-throw tests (out of 10)');
+      out.ftBars = fh.map(function (x) { var p = x.d.split('-'); return { label: (+p[2]) + '/' + (+p[1]), val: String(x.n), height: Math.max(4, Math.round(x.n / 10 * 70)) + 'px', color: accent }; });
+      out.longNote = L('Grafik bu güncellemeden sonraki antrenmanlarla dolar; şut isabeti kamerayla kaydettiğin antrenmanlardan gelir.', 'The chart fills with workouts from this update on; shooting accuracy comes from sessions you saved with the camera.');
 
       out.badges = [
         { name: L('İlk antrenman', 'First workout'), on: s.totalWorkouts >= 1 },
@@ -1074,11 +1136,158 @@ class Component extends DCLogic {
       });
 
       out.reminderPressed = s.reminder ? 'true' : 'false';
-      out.reminderState = s.reminder ? L('Açık', 'On') : L('Kapalı', 'Off');
-      out.toggleReminder = function () { self.setState({ reminder: !s.reminder }); };
+      out.reminderState = s.remBusy ? L('Bekle…', 'Wait…') : (s.reminder ? L('Açık', 'On') : L('Kapalı', 'Off'));
+      var remHour = typeof s.remHour === 'number' ? s.remHour : 18;
+      var remSet = function (on, hour) {
+        var sup = pushSupport();
+        if (on && !sup.ok) { self.setState({ remNote: sup.iosNeedsInstall ? L('iPhone\'da bildirim için önce uygulamayı ana ekrana ekle (Safari → Paylaş → Ana Ekrana Ekle), sonra oradan açıp tekrar dene.', 'On iPhone, first add the app to your home screen (Safari → Share → Add to Home Screen), open it from there and try again.') : L('Bu tarayıcı bildirimleri desteklemiyor.', 'This browser does not support notifications.') }); return; }
+        if (on && sup.iosNeedsInstall) { self.setState({ remNote: L('iPhone\'da bildirim için önce uygulamayı ana ekrana ekle (Safari → Paylaş → Ana Ekrana Ekle), sonra oradan açıp tekrar dene.', 'On iPhone, first add the app to your home screen (Safari → Share → Add to Home Screen), open it from there and try again.') }); return; }
+        if (on && s.sbOk !== true) { self.setState({ remNote: L('Hatırlatma için önce e-postanı bağla. Böylece bugün antrenman yaptıysan sana boşuna bildirim gelmez.', 'Connect your email first. That way you only get a reminder on days you have not trained yet.') }); return; }
+        self.setState({ remBusy: true, remNote: '' });
+        (on ? self.pushNow().then(function () { return pushEnable(hour, lang); }) : pushDisable()).then(function () {
+          self.setState({ remBusy: false, reminder: on, remHour: hour, remNote: on ? L('Tamam. Antrenman yapmadığın günlerde saat ' + hour + ':00 civarında hatırlatma gelecek.', 'Done. On days you have not trained, a reminder comes around ' + hour + ':00.') : L('Hatırlatma kapatıldı.', 'Reminder turned off.') });
+        }).catch(function (e) {
+          var denied = e && e.message === 'denied';
+          self.setState({ remBusy: false, remNote: denied ? L('Bildirim izni verilmedi. Telefonun ayarlarından Green AI için bildirimlere izin verip tekrar dene.', 'Notification permission was not given. Allow notifications for Green AI in your phone settings and try again.') : L('Hatırlatma açılamadı. İnternetini kontrol edip tekrar dene.', 'Could not turn on the reminder. Check your internet and try again.') });
+        });
+      };
+      out.toggleReminder = function () { if (!s.remBusy) { remSet(!s.reminder, remHour); } };
+      out.remNote = s.remNote || '';
+      out.remOn = !!s.reminder;
+      out.remHourLabel = L('Hatırlatma saati', 'Reminder time');
+      out.remHours = [16, 17, 18, 19, 20, 21].map(function (h) {
+        var sel = remHour === h;
+        return { label: h + ':00', pressed: sel ? 'true' : 'false', bg: sel ? '#F3F4F6' : 'transparent', fg: sel ? '#0F1115' : '#F3F4F6', pick: function () { if (!sel && !s.remBusy) { remSet(true, h); } } };
+      });
+      // Takma adı değiştir
+      out.nickEditing = !!s.nickEdit; out.nickNotEditing = !s.nickEdit;
+      out.nickDraft = s.nickDraft || '';
+      var nd = String(s.nickDraft || '');
+      out.nickDraftProblem = s.nickEdit && nd.length ? nickProblem(nd, L) : '';
+      out.nickEditLabels = { open: L('Takma adı değiştir', 'Change nickname'), save: L('Kaydet', 'Save'), cancel: L('Vazgeç', 'Cancel'), label: L('Yeni takma ad', 'New nickname') };
+      out.nickEditOpen = function () { self.setState({ nickEdit: true, nickDraft: nick }); };
+      out.nickEditCancel = function () { self.setState({ nickEdit: false, nickDraft: '' }); };
+      out.onNickDraft = function (e) { var v = (e && e.target && typeof e.target.value === 'string') ? e.target.value : ''; self.setState({ nickDraft: v.replace(/\s+/g, '').slice(0, 16) }); };
+      out.nickEditSave = function () {
+        if (nickProblem(nd, L)) { return; }
+        var a6 = Object.assign({}, s.answers); a6.nick = nd;
+        self.setState({ answers: a6, nickEdit: false, nickDraft: '' });
+      };
       out.saveNote = this.storeOk
-        ? L('Cevapların ve ilerlemen bu cihazda saklanıyor; uygulamayı tekrar açınca sorular yeniden sorulmaz. Hatırlatma bildirimi henüz bağlı değil.', 'Your answers and progress are stored on this device, so the questions are not asked again when you reopen the app. Reminder notifications are not connected yet.')
+        ? L('Cevapların ve ilerlemen bu cihazda saklanıyor; uygulamayı tekrar açınca sorular yeniden sorulmaz.', 'Your answers and progress are stored on this device, so the questions are not asked again when you reopen the app.')
         : L('Bu önizlemede kayıt kapalı, bu yüzden sayfa yenilenince sorular yeniden sorulur. Gerçek uygulamada cevaplar bir kez sorulur.', 'Saving is off in this preview, so the questions come back after a reload. In the real app they are asked only once.');
+
+      // ---------- Klan ----------
+      var cl = s.clan || null, myRole = cl ? cl.role : null, isAdmin = myRole === 'owner' || myRole === 'admin';
+      var roleName = function (r) { return r === 'owner' ? L('Kurucu', 'Founder') : (r === 'admin' ? L('Yönetici', 'Admin') : ''); };
+      out.c2 = {
+        needLink: s.sbOk !== true,
+        loading: s.sbOk === true && !s.clanLoaded,
+        none: s.sbOk === true && !!s.clanLoaded && !cl,
+        inClan: !!cl,
+        linkTitle: L('Klanlar için e-postanı bağla', 'Connect your email to use clans'),
+        linkBody: L('Klanlar arkadaşlarınla birlikte antrenman yaptığın küçük gruplardır. Sohbet edebilir, birbirinizin puanını görebilirsiniz.', 'Clans are small groups where you train with friends. You can chat and see each other\'s points.'),
+        loadingText: L('Klan bilgisi yükleniyor…', 'Loading your clan…'),
+        createTitle: L('Klan kur', 'Create a clan'),
+        createBody: L('Bir ad seç, sana bir katılma kodu verelim. Kodu sadece tanıdığın arkadaşlarınla paylaş.', 'Pick a name and you get a join code. Share the code only with friends you know.'),
+        nameLabel: L('Klan adı', 'Clan name'),
+        createBtn: L('Klanı kur', 'Create clan'),
+        joinTitle: L('Koda katıl', 'Join with a code'),
+        joinBody: L('Arkadaşının verdiği 6 haneli kodu yaz.', 'Enter the 6-character code your friend gave you.'),
+        codeLabel: L('Klan kodu', 'Clan code'),
+        joinBtn: L('Katıl', 'Join'),
+        safety: L('Güvenlik: adres, telefon, okul gibi kişisel bilgilerini paylaşma. Seni rahatsız eden bir mesaj olursa şikayet et ve bir yetişkine söyle.', 'Safety: never share personal details like your address, phone number or school. If a message bothers you, report it and tell an adult.'),
+        name: cl ? cl.name : '', code: cl ? cl.code : '',
+        meta: cl ? L((cl.members || []).length + ' üye · kod: ', (cl.members || []).length + ' members · code: ') : '',
+        shareBtn: L('Kodu paylaş', 'Share code'),
+        tabChat: L('Sohbet', 'Chat'), tabMembers: L('Üyeler', 'Members'),
+        announceOn: !!(cl && cl.announce),
+        announceBanner: L('Duyuru modu: sadece kurucu ve yöneticiler yazabilir.', 'Announcement mode: only the founder and admins can write.'),
+        canWrite: !!cl && (!cl.announce || isAdmin),
+        writeLabel: L('Mesaj yaz', 'Write a message'),
+        placeholder: L('Bugün ne çalıştın?', 'What did you train today?'),
+        sendBtn: L('Gönder', 'Send'),
+        empty: L('Henüz mesaj yok. İlk mesajı sen yaz: bugün ne çalıştın?', 'No messages yet. Write the first one: what did you train today?'),
+        isAdmin: isAdmin,
+        settingsTitle: L('Klan ayarları', 'Clan settings'),
+        announceLabel: L('Sadece yöneticiler yazabilsin (duyuru modu)', 'Only admins can write (announcement mode)'),
+        announcePressed: (cl && cl.announce) ? 'true' : 'false',
+        announceState: (cl && cl.announce) ? L('Açık', 'On') : L('Kapalı', 'Off'),
+        leaveBtn: s.leaveConfirm ? L('Emin misin? Ayrılmak için tekrar bas', 'Are you sure? Tap again to leave') : L('Klandan ayrıl', 'Leave clan'),
+        rankTitle: L('Bu haftanın klan sıralaması', 'This week\'s clan ranking'),
+        err: s.clanErr || '', busy: !!s.clanBusyUi,
+        reportLbl: L('Şikayet et', 'Report'), deleteLbl: L('Sil', 'Delete'),
+        reported: s.clanNote || ''
+      };
+      var cview = s.clanView === 'members' ? 'members' : 'chat';
+      out.c2.viewChat = cview === 'chat'; out.c2.viewMembers = cview === 'members';
+      out.c2.tabs = [{ id: 'chat', label: out.c2.tabChat }, { id: 'members', label: out.c2.tabMembers }].map(function (x) {
+        var sel = cview === x.id;
+        return { label: x.label, pressed: sel ? 'true' : 'false', bg: sel ? '#F3F4F6' : 'transparent', fg: sel ? '#0F1115' : '#F3F4F6', pick: function () { if (x.id === 'chat') { self.scrollChat = true; } self.setState({ clanView: x.id }); } };
+      });
+      out.clanNameDraft = s.clanNameDraft || '';
+      out.clanCodeDraft = s.clanCodeDraft || '';
+      out.chatDraft = s.chatDraft || '';
+      out.onClanName = function (e) { self.setState({ clanNameDraft: String((e && e.target && e.target.value) || '').slice(0, 24), clanErr: '' }); };
+      out.onClanCode = function (e) { self.setState({ clanCodeDraft: String((e && e.target && e.target.value) || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6), clanErr: '' }); };
+      out.onChat = function (e) { self.setState({ chatDraft: String((e && e.target && e.target.value) || '').slice(0, 300), clanErr: '' }); };
+      out.clanCreate = function () {
+        var nm = String(s.clanNameDraft || '').trim();
+        if (nm.length < 3) { self.setState({ clanErr: L('Klan adı en az 3 karakter olmalı.', 'The clan name must be at least 3 characters.') }); return; }
+        if (!textOk(nm)) { self.setState({ clanErr: clanErr('bad_word', L) }); return; }
+        clanCall(self, 'clan_create', { p_name: nm }, L, function () { self.setState({ clanNameDraft: '', clanView: 'chat' }); });
+      };
+      out.clanJoin = function () {
+        if (String(s.clanCodeDraft || '').length !== 6) { self.setState({ clanErr: L('Kod 6 karakter olmalı.', 'The code must be 6 characters.') }); return; }
+        clanCall(self, 'clan_join', { p_code: s.clanCodeDraft }, L, function () { self.setState({ clanCodeDraft: '', clanView: 'chat' }); });
+      };
+      out.clanSend = function () {
+        var body = String(s.chatDraft || '').trim();
+        if (!body || s.clanBusyUi) { return; }
+        if (!textOk(body)) { self.setState({ clanErr: clanErr('bad_word', L) }); return; }
+        if (!noContact(body)) { self.setState({ clanErr: clanErr('contact', L) }); return; }
+        self.scrollChat = true;
+        clanCall(self, 'clan_send', { p_body: body }, L, function () { self.setState({ chatDraft: '' }); });
+      };
+      out.clanShare = function () {
+        if (!cl) { return; }
+        var text = L('Green AI\'da klanıma katıl! Uygulamada Klan sekmesine gir ve bu kodu yaz: ', 'Join my clan on Green AI! Open the Clan tab in the app and enter this code: ') + cl.code;
+        var link = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
+        if (navigator.share) { navigator.share({ title: 'Green AI', text: text, url: link }).catch(function () {}); }
+        else if (navigator.clipboard) { navigator.clipboard.writeText(text + ' ' + link).then(function () { self.setState({ clanNote: L('Kod kopyalandı.', 'Code copied.') }); }, function () {}); }
+      };
+      out.clanToggleAnnounce = function () { if (cl) { clanCall(self, 'clan_set_announce', { p_on: !cl.announce }, L); } };
+      out.clanLeave = function () {
+        if (!s.leaveConfirm) { self.setState({ leaveConfirm: true }); setTimeout(function () { self.setState({ leaveConfirm: false }); }, 5000); return; }
+        clanCall(self, 'clan_leave', {}, L, function () { self.setState({ leaveConfirm: false, scope: s.scope === 'clan' ? 'group' : s.scope }); });
+      };
+      out.clanMsgs = (s.clanMsgs || []).map(function (m) {
+        var sel = s.msgSel === m.id;
+        return {
+          id: m.id, body: m.body, nick: m.mine ? L('Sen', 'You') : m.nickname, badge: roleName(m.role), hasBadge: !!roleName(m.role),
+          time: msgTime(m.created_at, lang), mine: !!m.mine, theirs: !m.mine,
+          align: m.mine ? 'flex-end' : 'flex-start', bg: m.mine ? '#3A2A1C' : '#1A1D24', bd: m.mine ? accent : '#262A33',
+          sel: sel, canDelete: m.mine || isAdmin, canReport: !m.mine,
+          aria: (m.mine ? L('Senin mesajın', 'Your message') : m.nickname) + ', ' + msgTime(m.created_at, lang),
+          pick: function () { self.setState({ msgSel: sel ? null : m.id }); },
+          del: function () { clanCall(self, 'clan_hide', { p_id: m.id }, L, function () { self.setState({ msgSel: null }); }); },
+          report: function () { clanCall(self, 'clan_report', { p_id: m.id }, L, function () { self.setState({ msgSel: null, clanNote: L('Şikayetin alındı. 3 şikayet alan mesaj otomatik gizlenir.', 'Report received. A message with 3 reports is hidden automatically.') }); }); }
+        };
+      });
+      out.c2.hasMsgs = out.clanMsgs.length > 0; out.c2.noMsgs = !out.c2.hasMsgs;
+      out.clanMembers = ((cl && cl.members) || []).map(function (m, i) {
+        var canKick = !m.me && m.role !== 'owner' && (myRole === 'owner' || (myRole === 'admin' && m.role === 'member'));
+        var canPromote = myRole === 'owner' && !m.me && m.role !== 'owner';
+        return {
+          rank: String(i + 1), nick: m.nickname, meTag: m.me ? L('(sen)', '(you)') : '', badge: roleName(m.role), hasBadge: !!roleName(m.role),
+          points: String(m.points), streak: (m.streak || 0) + ' ' + L('günlük seri', 'day streak'),
+          bg: m.me ? '#2A2016' : '#1A1D24', bd: m.me ? accent : '#262A33',
+          canKick: canKick, canPromote: canPromote, hasActions: canKick || canPromote,
+          kickLbl: L('Çıkar', 'Remove'), promoteLbl: m.role === 'admin' ? L('Üye yap', 'Make member') : L('Yönetici yap', 'Make admin'),
+          kick: function () { clanCall(self, 'clan_kick', { p_uid: m.uid }, L); },
+          promote: function () { clanCall(self, 'clan_set_role', { p_uid: m.uid, p_role: m.role === 'admin' ? 'member' : 'admin' }, L); }
+        };
+      });
 
       out.editProfile = function () { self.setState({ screen: 1, langOpen: false }); };
       out.resetAll = function () {
