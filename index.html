@@ -80,6 +80,7 @@ html, body { background: #0F1115; }
 </sc-if>
 <button type="button" onClick="{{ authSkip }}" style="height: 44px; border: none; background: transparent; color: #B4B9C4; font-size: 15px; font-weight: 500; text-decoration: underline">{{ au.skip }}</button>
 <p style="margin: 0; text-align: center; font-size: 13px; line-height: 1.4; color: #B4B9C4">{{ au.legal }}</p>
+<sc-if value="{{ au.privacy }}" hint-placeholder-val="{{ true }}"><a href="gizlilik.html" style="align-self: center; min-height: 32px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600">{{ au.privacy }}</a></sc-if>
 </div>
 </div>
 </sc-if>
@@ -947,6 +948,27 @@ html, body { background: #0F1115; }
 </div>
 </sc-if>
 
+<section aria-label="{{ dl.title }}" style="padding: 16px; border-radius: 16px; background: #1A1D24; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 18px">{{ dl.title }}</h2>
+<span style="font-size: 14px; line-height: 1.45; color: #B4B9C4">{{ dl.privNote }}</span>
+<a href="gizlilik.html" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 2px solid #3A3F4B; color: #F3F4F6; text-decoration: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; font-weight: 600"><span>{{ dl.privLink }}</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4l6 6-6 6"></path></svg></a>
+<sc-if value="{{ dl.canDelete }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ delAsk }}" style="height: 44px; border: 2px solid #FF9B8A; border-radius: 12px; background: transparent; color: #FF9B8A; font-size: 15px; font-weight: 600">{{ dl.deleteBtn }}</button></sc-if>
+<sc-if value="{{ dl.confirm }}" hint-placeholder-val="{{ false }}">
+<div role="alertdialog" aria-label="{{ dl.warnTitle }}" style="padding: 14px; border-radius: 14px; background: #2A1A18; border: 1px solid #FF9B8A; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 16px; font-weight: 700">{{ dl.warnTitle }}</span>
+<span style="font-size: 14px; line-height: 1.45; color: #F3F4F6">{{ dl.warnBody }}</span>
+<button type="button" onClick="{{ delConfirm }}" style="height: 48px; border: none; border-radius: 12px; background: #FF9B8A; color: #0F1115; font-size: 15px; font-weight: 700">{{ dl.yesBtn }}</button>
+<button type="button" onClick="{{ delCancel }}" style="height: 44px; border: 2px solid #3A3F4B; border-radius: 12px; background: transparent; color: #F3F4F6; font-size: 15px; font-weight: 600">{{ dl.noBtn }}</button>
+</div>
+</sc-if>
+<sc-if value="{{ dl.needLogin }}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 14px; line-height: 1.45; color: #F3F4F6">{{ dl.loginText }}</span>
+<button type="button" onClick="{{ lbLink }}" style="height: 44px; border: none; border-radius: 12px; background: #F3F4F6; color: #0F1115; font-size: 15px; font-weight: 600">{{ dl.loginBtn }}</button>
+</sc-if>
+<sc-if value="{{ dl.noAccount }}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.45; color: #B4B9C4">{{ dl.noAccountText }}</span></sc-if>
+<sc-if value="{{ dl.err }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 14px; line-height: 1.4; color: #FF9B8A">{{ dl.err }}</p></sc-if>
+</section>
+
 </div>
 </sc-if>
 
@@ -969,7 +991,7 @@ html, body { background: #0F1115; }
 </template>
 <script src="app-core.js?v=10"></script>
 <script src="app-extra.js?v=10"></script>
-<script src="app-plus.js?v=10"></script>
+<script src="app-plus.js?v=11"></script>
 <script src="app-main.js?v=10"></script>
 
 <div id="install" role="dialog" aria-labelledby="install-t" style="display:none; position:fixed; left:12px; right:12px; bottom:92px; z-index:50; max-width:496px; margin:0 auto; padding:14px 16px; border-radius:16px; background:#1A1D24; border:1px solid #3A3F4B; color:#F3F4F6; font-family:Inter, system-ui, sans-serif; flex-direction:column; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.45)">
