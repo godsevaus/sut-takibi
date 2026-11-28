@@ -1,7 +1,7 @@
 // Green AI arka plan dosyası: uygulamayı internetsiz açar, takip modellerini ilk indirmeden sonra saklar.
 // Yeni sürüm yayınlarken VERSION'ı değiştir; eski önbellek silinir.
-const VERSION = "greenai-v10";
-const SHELL = ["./", "./index.html", "./takip.html", "./app-core.js?v=10", "./app-extra.js?v=10", "./app-plus.js?v=10", "./app-main.js?v=10", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
+const VERSION = "greenai-v11";
+const SHELL = ["./", "./index.html", "./takip.html", "./gizlilik.html", "./app-core.js?v=10", "./app-extra.js?v=10", "./app-plus.js?v=11", "./app-main.js?v=10", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 const MODEL_HOSTS = ["cdn.jsdelivr.net", "storage.googleapis.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
 self.addEventListener("install", (e) => {

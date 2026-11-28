@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0F1115">
+<title>Green AI · Gizlilik</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+html, body { margin: 0; background: #0F1115; color: #F3F4F6; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: 24px 20px 48px; line-height: 1.55; font-size: 16px; }
+h1 { font-family: "Space Grotesk", Inter, sans-serif; font-size: 30px; line-height: 1.15; margin: 8px 0 4px; }
+h2 { font-family: "Space Grotesk", Inter, sans-serif; font-size: 19px; margin: 28px 0 8px; color: #FF8A3D; }
+p, li { color: #D7DAE0; }
+ul { padding-left: 20px; margin: 8px 0; }
+li { margin: 4px 0; }
+a { color: #FFB37A; }
+a:focus-visible, button:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 12px; background: #1A1D24; color: #F3F4F6; text-decoration: none; font-weight: 600; }
+.langs { display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: #1A1D24; }
+.langs button { min-height: 40px; min-width: 48px; border: none; border-radius: 9px; background: transparent; color: #F3F4F6; font: inherit; font-weight: 600; cursor: pointer; }
+.langs button[aria-pressed="true"] { background: #F3F4F6; color: #0F1115; }
+.date { color: #B4B9C4; font-size: 14px; margin: 0; }
+.box { margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: #1A1D24; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+  <a class="back" href="./" id="back">← Uygulamaya dön</a>
+  <div class="langs" role="group" aria-label="Dil / Language">
+    <button type="button" data-l="tr" aria-pressed="true">TR</button>
+    <button type="button" data-l="en" aria-pressed="false">EN</button>
+  </div>
+</div>
+
+<article lang="tr" id="tr">
+<h1>Gizlilik</h1>
+<p class="date">Son güncelleme: 28 Kasım 2026</p>
+<div class="box">Kısaca: Green AI sadece uygulamanın çalışması için gereken bilgileri saklar. Gerçek adını, konumunu ve kamera görüntülerini toplamaz. Reklam ve takip yoktur. Verilerini istediğin zaman silebilirsin.</div>
+
+<h2>Green AI nedir?</h2>
+<p>Green AI, gençler için bir basketbol antrenman uygulamasıdır. Kişisel ve ticari olmayan bir projedir; para kazanmak için kullanılmaz.</p>
+
+<h2>Hangi bilgiler saklanır?</h2>
+<ul>
+<li><strong>E-posta adresin:</strong> sadece giriş kodu göndermek ve hesabını tanımak için.</li>
+<li><strong>Takma adın:</strong> sıralamada ve klanda görünen ad. Gerçek adını kullanmaman istenir.</li>
+<li><strong>Soruların cevapları:</strong> yaş, boy, şut eli, pozisyon, oyun tarzı, seviye, lig, hedef ve haftalık çalışma günü. Kilo ve cinsiyet isteğe bağlıdır; boş bırakabilirsin.</li>
+<li><strong>Antrenman ilerlemen:</strong> seri, puanlar, görevler, serbest atış testleri ve şut takibi sonuçları (sadece sayılar).</li>
+<li><strong>Klan bilgileri:</strong> katıldığın klan, rolün ve yazdığın mesajlar.</li>
+<li><strong>Hatırlatma açtıysan:</strong> telefonuna bildirim gönderebilmek için gereken teknik bilgi, saat dilimin ve seçtiğin saat.</li>
+</ul>
+<p>Hesap açmadan kullanırsan bu bilgiler sunucuya gönderilmez, sadece telefonunda kalır.</p>
+
+<h2>Neler toplanmaz?</h2>
+<ul>
+<li>Gerçek adın, adresin, telefon numaran, okulun ve konumun.</li>
+<li><strong>Kamera görüntüleri:</strong> şut takibinde kamera görüntüsü telefonunda işlenir; hiçbir yere gönderilmez ve kaydedilmez. Sadece "kaç şut, kaç isabet" gibi sayılar saklanır.</li>
+<li>Reklam, reklam takibi ya da kullanım analizi (analytics) yoktur.</li>
+</ul>
+
+<h2>Bilgiler nerede tutulur?</h2>
+<ul>
+<li><strong>Supabase:</strong> hesap ve ilerleme bilgileri Almanya'daki (Frankfurt) sunucularda saklanır.</li>
+<li><strong>Brevo:</strong> giriş kodu e-postaları bu servis üzerinden gönderilir.</li>
+<li><strong>GitHub Pages:</strong> uygulamanın dosyaları burada barındırılır.</li>
+<li><strong>Google Fonts, jsDelivr ve Google depolama:</strong> yazı tipleri ve şut takibi modeli buradan indirilir. Bu servisler, her web sitesinde olduğu gibi, cihazının internet (IP) adresini görebilir.</li>
+</ul>
+
+<h2>Bilgilerini kimler görebilir?</h2>
+<ul>
+<li><strong>Sıralamada:</strong> diğer oyuncular sadece takma adını, serini ve haftalık puanını görür.</li>
+<li><strong>Klanında:</strong> klan üyeleri takma adını, puanını ve mesajlarını görür.</li>
+<li><strong>E-postanı ve cevaplarını</strong> başka hiçbir kullanıcı göremez.</li>
+<li>Bilgilerin satılmaz ve kimseyle paylaşılmaz.</li>
+</ul>
+
+<h2>Güvenlik</h2>
+<ul>
+<li>Şifre yoktur; giriş e-postana gelen tek kullanımlık kodla yapılır.</li>
+<li>Klan mesajlarında telefon numarası, adres gibi iletişim bilgileri engellenir. Rahatsız edici bir mesajı şikayet edebilirsin; 3 şikayet alan mesaj otomatik gizlenir.</li>
+</ul>
+
+<h2>Bilgiler ne kadar süre saklanır?</h2>
+<p>Hesabını silene kadar. Haftalık sıralama puanları her pazartesi yeni haftaya geçer.</p>
+
+<h2>Verilerini nasıl silersin?</h2>
+<ul>
+<li>Uygulamada <strong>Profil → Gizlilik ve hesabın → Hesabımı sil</strong>. Bu, e-postanı, takma adını, cevaplarını, ilerlemeni, puanlarını, klan üyeliğini ve klan mesajlarını kalıcı olarak siler.</li>
+<li>Hesap açmadan kullanıyorsan <strong>Profil → Her şeyi sıfırla ve baştan başla</strong> telefonundaki her şeyi siler.</li>
+</ul>
+<p>Avrupa Birliği veri koruma kurallarına (GDPR) göre bilgilerini görme, düzeltme ve sildirme hakkın vardır.</p>
+
+<h2>Çocuklar</h2>
+<p>18 yaşından küçüksen hesabı bir ebeveynle birlikte aç ve bu sayfayı birlikte okuyun.</p>
+
+<h2>İletişim</h2>
+<p>Soruların için uygulamanın GitHub sayfasından ulaşabilirsin: <a href="https://github.com/godsevaus/sut-takibi">github.com/godsevaus/sut-takibi</a></p>
+</article>
+
+<article lang="en" id="en" hidden>
+<h1>Privacy</h1>
+<p class="date">Last updated: 28 November 2026</p>
+<div class="box">In short: Green AI only stores what the app needs to work. It does not collect your real name, your location or camera images. There are no ads and no tracking. You can delete your data at any time.</div>
+
+<h2>What is Green AI?</h2>
+<p>Green AI is a basketball training app for young players. It is a personal, non-commercial project and is not used to make money.</p>
+
+<h2>What is stored?</h2>
+<ul>
+<li><strong>Your email address:</strong> only to send sign-in codes and recognise your account.</li>
+<li><strong>Your nickname:</strong> the name shown on the leaderboard and in your clan. Please do not use your real name.</li>
+<li><strong>Your answers:</strong> age, height, shooting hand, position, play style, level, league, goal and training days per week. Weight and gender are optional; you can leave them out.</li>
+<li><strong>Your training progress:</strong> streak, points, missions, free-throw tests and shot-tracking results (numbers only).</li>
+<li><strong>Clan data:</strong> the clan you joined, your role and the messages you write.</li>
+<li><strong>If you turn on reminders:</strong> the technical details needed to send a notification to your phone, your time zone and the hour you picked.</li>
+</ul>
+<p>If you use the app without an account, none of this is sent to the server; it stays on your phone.</p>
+
+<h2>What is not collected?</h2>
+<ul>
+<li>Your real name, address, phone number, school or location.</li>
+<li><strong>Camera images:</strong> during shot tracking the camera picture is processed on your phone. It is never sent anywhere or saved. Only numbers such as "shots taken, shots made" are stored.</li>
+<li>There are no ads, no ad tracking and no usage analytics.</li>
+</ul>
+
+<h2>Where is the data kept?</h2>
+<ul>
+<li><strong>Supabase:</strong> account and progress data is stored on servers in Germany (Frankfurt).</li>
+<li><strong>Brevo:</strong> sign-in code emails are sent through this service.</li>
+<li><strong>GitHub Pages:</strong> the app's files are hosted here.</li>
+<li><strong>Google Fonts, jsDelivr and Google storage:</strong> fonts and the shot-tracking model are downloaded from here. Like any website, these services can see your device's internet (IP) address.</li>
+</ul>
+
+<h2>Who can see your data?</h2>
+<ul>
+<li><strong>On the leaderboard:</strong> other players only see your nickname, streak and weekly points.</li>
+<li><strong>In your clan:</strong> clan members see your nickname, points and messages.</li>
+<li><strong>Your email and answers</strong> are never shown to other users.</li>
+<li>Your data is never sold or shared with anyone.</li>
+</ul>
+
+<h2>Safety</h2>
+<ul>
+<li>There is no password; you sign in with a one-time code sent to your email.</li>
+<li>Contact details such as phone numbers and addresses are blocked in clan messages. You can report a message that bothers you; a message with 3 reports is hidden automatically.</li>
+</ul>
+
+<h2>How long is data kept?</h2>
+<p>Until you delete your account. Weekly leaderboard points move to a new week every Monday.</p>
+
+<h2>How do you delete your data?</h2>
+<ul>
+<li>In the app: <strong>Profile → Privacy and your account → Delete my account</strong>. This permanently deletes your email, nickname, answers, progress, points, clan membership and clan messages.</li>
+<li>If you use the app without an account, <strong>Profile → Reset everything and start over</strong> deletes everything on your phone.</li>
+</ul>
+<p>Under European Union data protection rules (GDPR) you have the right to see, correct and delete your data.</p>
+
+<h2>Children</h2>
+<p>If you are under 18, set up your account together with a parent and read this page together.</p>
+
+<h2>Contact</h2>
+<p>For questions, reach the app owner through its GitHub page: <a href="https://github.com/godsevaus/sut-takibi">github.com/godsevaus/sut-takibi</a></p>
+</article>
+</main>
+<script>
+(function () {
+  var stored = 'tr';
+  try { stored = (JSON.parse(localStorage.getItem('basketballAi.v2') || '{}').lang) || 'tr'; } catch (e) {}
+  var back = { tr: '← Uygulamaya dön', en: '← Back to the app' };
+  function set(l) {
+    document.getElementById('tr').hidden = l !== 'tr';
+    document.getElementById('en').hidden = l !== 'en';
+    document.documentElement.lang = l;
+    document.title = l === 'tr' ? 'Green AI · Gizlilik' : 'Green AI · Privacy';
+    document.getElementById('back').textContent = back[l];
+    document.querySelectorAll('.langs button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-l') === l ? 'true' : 'false'); });
+  }
+  document.querySelectorAll('.langs button').forEach(function (b) { b.addEventListener('click', function () { set(b.getAttribute('data-l')); }); });
+  set(stored === 'tr' ? 'tr' : 'en');
+})();
+</script>
+</body>
+</html>
